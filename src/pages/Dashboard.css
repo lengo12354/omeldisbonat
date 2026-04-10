@@ -22,10 +22,7 @@
 .dashboard-title {
     font-size: 2.25rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff; /* White like the others */
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -33,8 +30,7 @@
 }
 
 .title-icon {
-    color: #6366f1;
-    -webkit-text-fill-color: initial;
+    color: #ffffff;
 }
 
 .dashboard-subtitle {
