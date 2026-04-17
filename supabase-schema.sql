@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS products (
   name TEXT NOT NULL,
   price DECIMAL(10, 2) NOT NULL DEFAULT 0,
   purchase_price DECIMAL(10, 2) DEFAULT 0,
-  stock_quantity INTEGER DEFAULT 0,
-  reorder_level INTEGER DEFAULT 5,
+  stock_quantity DECIMAL(10, 2) DEFAULT 0,
+  reorder_level DECIMAL(10, 2) DEFAULT 5,
   category TEXT,
   description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
@@ -82,8 +82,12 @@ CREATE INDEX idx_collections_name ON collections(name);
 
 -- زيد columns stock على products (ما تأثرش على data القديمة)
 ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_price DECIMAL(10,2) DEFAULT 0;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT 0;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_level INTEGER DEFAULT 5;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity DECIMAL(10,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_level DECIMAL(10,2) DEFAULT 5;
+
+-- تحويل columns القديمة من INTEGER ل DECIMAL (شغّل هاد SQL ف Supabase SQL Editor)
+ALTER TABLE products ALTER COLUMN stock_quantity TYPE DECIMAL(10,2);
+ALTER TABLE products ALTER COLUMN reorder_level TYPE DECIMAL(10,2);
 
 -- زيد columns profit على orders (ما تأثرش على data القديمة)
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS cost_amount DECIMAL(10,2) DEFAULT 0;
