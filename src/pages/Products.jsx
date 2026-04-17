@@ -37,7 +37,7 @@ export default function Products() {
                 ...formData,
                 price: 0,
                 purchase_price: parseFloat(formData.purchase_price) || 0,
-                stock_quantity: parseInt(formData.stock_quantity) || 0,
+                stock_quantity: parseFloat(formData.stock_quantity) || 0,
                 reorder_level: parseInt(formData.reorder_level) || 5,
             };
 
@@ -392,7 +392,7 @@ export default function Products() {
                         <div className="form-group">
                             <label>Quantité en Stock</label>
                             <input
-                                type="number" min="0" className="input"
+                                type="number" min="0" step="0.5" className="input"
                                 placeholder="0"
                                 value={formData.stock_quantity}
                                 onChange={e => setFormData({ ...formData, stock_quantity: e.target.value })}

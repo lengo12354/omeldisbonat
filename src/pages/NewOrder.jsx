@@ -50,7 +50,13 @@ export default function NewOrder() {
 
         const sellPrice = parseFloat(itemForm.price) || 0;
         const purchasePrice = parseFloat(currentProduct.purchase_price) || 0;
-        const quantity = parseInt(itemForm.quantity) || 1;
+        const quantity = parseFloat(itemForm.quantity) || 1;
+
+        // ❌ منع البيع بأقل من ثمن الشراء
+        if (purchasePrice > 0 && sellPrice < purchasePrice) {
+            alert(`⚠️ Prix de vente invalide!\nLe prix de vente (${sellPrice} MAD) ne peut pas être inférieur au prix d'achat (${purchasePrice} MAD).`);
+            return;
+        }
         const totalSell = sellPrice * quantity;
         const totalCost = purchasePrice * quantity;
         const profit = totalSell - totalCost;
@@ -349,13 +355,18 @@ export default function NewOrder() {
                         <input
                             type="number"
                             step="0.01"
-                            min="0"
+                            min={currentProduct?.purchase_price || 0}
                             className="input"
                             value={itemForm.price}
                             onChange={e => setItemForm({ ...itemForm, price: e.target.value })}
                             autoFocus
                             required
                         />
+                        {currentProduct?.purchase_price > 0 && (
+                            <span className="form-hint" style={{ color: 'var(--warning)' }}>
+                                ⚠️ Prix minimum: {parseFloat(currentProduct.purchase_price).toFixed(2)} MAD (ras el mal)
+                            </span>
+                        )}
                     </div>
                     <div className="form-group">
                         <label>Quantité</label>
@@ -363,22 +374,23 @@ export default function NewOrder() {
                             <button
                                 type="button"
                                 className="btn btn-outline"
-                                onClick={() => setItemForm(prev => ({ ...prev, quantity: Math.max(1, parseInt(prev.quantity) - 1) }))}
+                                onClick={() => setItemForm(prev => ({ ...prev, quantity: Math.max(0.5, parseFloat(prev.quantity) - 0.5) }))}
                             >
                                 <Minus size={16} />
                             </button>
                             <input
                                 type="number"
+                                step="0.5"
                                 className="input quantity-input"
                                 value={itemForm.quantity}
-                                min="1"
+                                min="0.5"
                                 max={currentProduct?.stock_quantity || 9999}
                                 onChange={e => setItemForm({ ...itemForm, quantity: e.target.value })}
                             />
                             <button
                                 type="button"
                                 className="btn btn-outline"
-                                onClick={() => setItemForm(prev => ({ ...prev, quantity: parseInt(prev.quantity) + 1 }))}
+                                onClick={() => setItemForm(prev => ({ ...prev, quantity: parseFloat(prev.quantity) + 0.5 }))}
                             >
                                 <Plus size={16} />
                             </button>
@@ -390,21 +402,21 @@ export default function NewOrder() {
                         <div className="modal-profit-preview">
                             <div className="preview-row">
                                 <span>Vente:</span>
-                                <span>{(parseFloat(itemForm.price) * parseInt(itemForm.quantity || 1)).toFixed(2)} MAD</span>
+                                <span>{(parseFloat(itemForm.price) * parseFloat(itemForm.quantity || 1)).toFixed(2)} MAD</span>
                             </div>
                             <div className="preview-row">
                                 <span>Coût:</span>
-                                <span>- {(parseFloat(currentProduct.purchase_price) * parseInt(itemForm.quantity || 1)).toFixed(2)} MAD</span>
+                                <span>- {(parseFloat(currentProduct.purchase_price) * parseFloat(itemForm.quantity || 1)).toFixed(2)} MAD</span>
                             </div>
                             <div className="preview-row preview-row--profit">
                                 <span>Profit:</span>
                                 <span style={{
                                     color: getProfitColor(
-                                        (parseFloat(itemForm.price) - parseFloat(currentProduct.purchase_price)) * parseInt(itemForm.quantity || 1)
+                                        (parseFloat(itemForm.price) - parseFloat(currentProduct.purchase_price)) * parseFloat(itemForm.quantity || 1)
                                     )
                                 }}>
-                                    {((parseFloat(itemForm.price) - parseFloat(currentProduct.purchase_price)) * parseInt(itemForm.quantity || 1) >= 0 ? '+' : '')}
-                                    {((parseFloat(itemForm.price) - parseFloat(currentProduct.purchase_price)) * parseInt(itemForm.quantity || 1)).toFixed(2)} MAD
+                                    {((parseFloat(itemForm.price) - parseFloat(currentProduct.purchase_price)) * parseFloat(itemForm.quantity || 1) >= 0 ? '+' : '')}
+                                    {((parseFloat(itemForm.price) - parseFloat(currentProduct.purchase_price)) * parseFloat(itemForm.quantity || 1)).toFixed(2)} MAD
                                 </span>
                             </div>
                         </div>
@@ -413,7 +425,7 @@ export default function NewOrder() {
                     <div className="form-total">
                         <span>Sous-total:</span>
                         <span className="subtotal-amount">
-                            {(parseFloat(itemForm.price || 0) * parseInt(itemForm.quantity || 1)).toFixed(2)} MAD
+                            {(parseFloat(itemForm.price || 0) * parseFloat(itemForm.quantity || 1)).toFixed(2)} MAD
                         </span>
                     </div>
                     <div className="form-actions">
