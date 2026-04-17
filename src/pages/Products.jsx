@@ -285,9 +285,7 @@ export default function Products() {
                                     <Package size={48} />
                                 </div>
 
-                                {product.code_barre && (
-                                    <span className="product-code badge badge-info">{product.code_barre}</span>
-                                )}
+
 
                                 <div className="product-details">
                                     <h3 className="product-name">{product.name}</h3>
