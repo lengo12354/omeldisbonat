@@ -56,13 +56,12 @@ export default function PickingList() {
     }, [filteredOrders]);
 
     // -- PDF Generation --
-    const generatePDFContent = () => {
+    const generatePDFPage = (itemsChunk, pageIndex, totalPages, isLastPage) => {
         const dateRangeText = `Du ${new Date(startDate).toLocaleDateString('fr-FR')} au ${new Date(endDate).toLocaleDateString('fr-FR')}`;
 
-        const totalQty = pickingList.reduce((sum, item) => sum + item.totalQuantity, 0);
-
         return `
-            <div style="width: 800px; padding: 40px; background: white; font-family: Arial, sans-serif; direction: rtl; color: black !important;">
+            <div style="width: 800px; min-height: 1050px; padding: 40px; background: white; font-family: Arial, sans-serif; direction: rtl; color: black !important; box-sizing: border-box;">
+                ${pageIndex === 0 ? `
                 <!-- Header - No Logo -->
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1f2937; padding-bottom: 20px;">
                     <h1 style="font-size: 32px; color: #111827; margin: 0 0 10px 0;">ورقة التجميع</h1>
@@ -84,12 +83,12 @@ export default function PickingList() {
                         <p style="font-weight: bold; color: #111827; margin: 5px 0 0 0; font-size: 14px;">${filteredOrders.length} طلب</p>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- Table -->
-                <table style="width: 100%; border-collapse: collapse; border: 2px solid #1f2937; margin-bottom: 30px;">
+                <table style="width: 100%; border-collapse: collapse; box-shadow: 0 0 0 2px #1f2937; margin-bottom: 40px;">
                     <thead>
                         <tr style="background-color: #1f2937; color: white;">
-                            <th style="border: 1px solid #374151; padding: 12px; text-align: right; font-size: 14px; width: 50px;">#</th>
                             <th style="border: 1px solid #374151; padding: 12px; text-align: right; font-size: 14px;">اسم المنتج</th>
                             <th style="border: 1px solid #374151; padding: 12px; text-align: center; font-size: 14px; width: 100px;">الكمية</th>
                             <th style="border: 1px solid #374151; padding: 12px; text-align: center; font-size: 14px; width: 80px;">الوحدة</th>
@@ -97,29 +96,25 @@ export default function PickingList() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${pickingList.map((item, index) => `
-                            <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-                                <td style="border: 1px solid #d1d5db; padding: 12px; text-align: center; color: #111827; font-size: 13px;">${index + 1}</td>
-                                <td style="border: 1px solid #d1d5db; padding: 12px; color: #111827; font-size: 13px; font-weight: 500;">${item.productName}</td>
+                        ${itemsChunk.map((item) => `
+                            <tr style="background-color: ${item.originalIndex % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                                <td style="border: 1px solid #d1d5db; padding: 12px; color: #111827; font-size: 15px; font-weight: 700;">${item.productName}</td>
                                 <td style="border: 1px solid #d1d5db; padding: 12px; text-align: center; color: #2563eb; font-size: 18px; font-weight: bold;">${item.totalQuantity}</td>
                                 <td style="border: 1px solid #d1d5db; padding: 12px; text-align: center; color: #111827; font-size: 13px;">${item.unit}</td>
                                 <td style="border: 1px solid #d1d5db; padding: 12px; color: #111827; font-size: 13px;"></td>
                             </tr>
                         `).join('')}
                     </tbody>
+                    ${isLastPage ? `
                     <tfoot>
                         <tr style="background-color: #f3f4f6; font-weight: bold;">
-                            <td colspan="2" style="border: 1px solid #d1d5db; padding: 12px; text-align: right; color: #111827; font-size: 14px;">عدد المواد (Nombre d'articles)</td>
-                            <td style="border: 1px solid #d1d5db; padding: 12px; text-align: center; color: #2563eb; font-size: 18px; font-weight: bold;">${pickingList.length}</td>
-                            <td colspan="2" style="border: 1px solid #d1d5db; padding: 12px; color: #111827; font-size: 14px;">مادة</td>
+                            <td style="border: 1px solid #d1d5db; border-top: 2px solid #1f2937; padding: 12px; text-align: right; color: #111827; font-size: 14px;">عدد المواد (Nombre d'articles)</td>
+                            <td style="border: 1px solid #d1d5db; border-top: 2px solid #1f2937; padding: 12px; text-align: center; color: #2563eb; font-size: 18px; font-weight: bold;">${pickingList.length}</td>
+                            <td colspan="2" style="border: 1px solid #d1d5db; border-top: 2px solid #1f2937; padding: 12px; color: #111827; font-size: 14px;">مادة</td>
                         </tr>
                     </tfoot>
+                    ` : ''}
                 </table>
-
-                <!-- Footer -->
-                <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #6b7280; border-top: 1px solid #d1d5db; padding-top: 15px;">
-                    <p style="margin: 0;">Généré par Omeldis Dashboard - ${new Date().toLocaleString('fr-FR')}</p>
-                </div>
             </div>
         `;
     };
@@ -129,32 +124,67 @@ export default function PickingList() {
             const { default: html2canvas } = await import('html2canvas');
             const { default: jsPDF } = await import('jspdf');
 
-            const container = document.createElement('div');
-            container.innerHTML = generatePDFContent();
-            container.style.position = 'absolute';
-            container.style.left = '-9999px';
-            document.body.appendChild(container);
-
-            const canvas = await html2canvas(container.firstElementChild, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            });
-
-            document.body.removeChild(container);
-
-            const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-            const imgX = (pdfWidth - imgWidth * ratio) / 2;
-            const imgY = 10;
 
-            pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+            // Create chunks
+            const chunks = [];
+            const firstPageCount = 12;
+            const otherPageCount = 20;
+
+            const listWithIndices = pickingList.map((item, idx) => ({ ...item, originalIndex: idx }));
+
+            if (listWithIndices.length === 0) {
+                alert('Aucune donnée à imprimer');
+                return;
+            }
+
+            if (listWithIndices.length <= firstPageCount) {
+                chunks.push(listWithIndices);
+            } else {
+                chunks.push(listWithIndices.slice(0, firstPageCount));
+                let i = firstPageCount;
+                while (i < listWithIndices.length) {
+                    chunks.push(listWithIndices.slice(i, i + otherPageCount));
+                    i += otherPageCount;
+                }
+            }
+
+            const totalPages = chunks.length;
+
+            for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+                const chunk = chunks[pageIndex];
+                const isLastPage = (pageIndex === totalPages - 1);
+
+                const container = document.createElement('div');
+                container.innerHTML = generatePDFPage(chunk, pageIndex, totalPages, isLastPage);
+                container.style.position = 'absolute';
+                container.style.left = '-9999px';
+                document.body.appendChild(container);
+
+                const canvas = await html2canvas(container.firstElementChild, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                document.body.removeChild(container);
+
+                const imgData = canvas.toDataURL('image/png');
+
+                if (pageIndex > 0) {
+                    pdf.addPage();
+                }
+
+                // We will scale it to fit the page horizontally exactly.
+                // Since canvas width is fixed at 1600 (800 * scale 2), the ratio is identical for all pages.
+                const ratio = pdfWidth / canvas.width;
+                const imgHeight = canvas.height * ratio;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+            }
 
             if (action === 'print') {
                 const pdfBlob = pdf.output('blob');
@@ -247,7 +277,6 @@ export default function PickingList() {
                     <table className="picking-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '60px', textAlign: 'center' }}>#</th>
                                 <th>Produit</th>
                                 <th style={{ textAlign: 'center' }}>Quantité</th>
                                 <th style={{ textAlign: 'center' }}>Unité</th>
@@ -257,7 +286,6 @@ export default function PickingList() {
                         <tbody>
                             {pickingList.map((item, index) => (
                                 <tr key={index}>
-                                    <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{index + 1}</td>
                                     <td style={{ fontWeight: 500 }}>{item.productName}</td>
                                     <td className="qty-cell">{item.totalQuantity}</td>
                                     <td style={{ textAlign: 'center' }}>{item.unit}</td>
@@ -267,7 +295,7 @@ export default function PickingList() {
                         </tbody>
                         <tfoot style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 'bold' }}>
                             <tr>
-                                <td colSpan={2} style={{ textAlign: 'right', paddingRight: '2rem' }}>Nombre d'articles</td>
+                                <td style={{ textAlign: 'right', paddingRight: '2rem' }}>Nombre d'articles</td>
                                 <td className="qty-cell">{pickingList.length}</td>
                                 <td></td>
                                 <td></td>
