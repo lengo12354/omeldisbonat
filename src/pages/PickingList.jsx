@@ -60,7 +60,7 @@ export default function PickingList() {
         const dateRangeText = `Du ${new Date(startDate).toLocaleDateString('fr-FR')} au ${new Date(endDate).toLocaleDateString('fr-FR')}`;
 
         return `
-            <div style="width: 800px; min-height: 1050px; padding: 40px; background: white; font-family: Arial, sans-serif; direction: rtl; color: black !important; box-sizing: border-box;">
+            <div style="width: 800px; height: 1120px; position: relative; padding: 40px; background: white; font-family: Arial, sans-serif; direction: rtl; color: black !important; box-sizing: border-box;">
                 ${pageIndex === 0 ? `
                 <!-- Header - No Logo -->
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1f2937; padding-bottom: 20px;">
@@ -86,7 +86,7 @@ export default function PickingList() {
                 ` : ''}
 
                 <!-- Table -->
-                <table style="width: 100%; border-collapse: collapse; box-shadow: 0 0 0 2px #1f2937; margin-bottom: 40px;">
+                <table style="width: 100%; border-collapse: collapse; border: 2px solid #1f2937; margin-bottom: 40px;">
                     <thead>
                         <tr style="background-color: #1f2937; color: white;">
                             <th style="border: 1px solid #374151; padding: 12px; text-align: right; font-size: 14px;">اسم المنتج</th>
@@ -130,8 +130,8 @@ export default function PickingList() {
 
             // Create chunks
             const chunks = [];
-            const firstPageCount = 12;
-            const otherPageCount = 20;
+            const firstPageCount = 10;
+            const otherPageCount = 15;
 
             const listWithIndices = pickingList.map((item, idx) => ({ ...item, originalIndex: idx }));
 
