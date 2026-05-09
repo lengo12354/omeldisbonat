@@ -13,16 +13,22 @@
 }
 
 .modal-content {
-    background-color: #1e293b;
-    border-radius: 12px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(99,102,241,0.08);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    animation: modalSlideIn 0.3s ease-out;
+    animation: modalSlideIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Large modal variant for edit order */
+.modal-lg {
+    max-width: 720px;
 }
 
 @keyframes modalSlideIn {

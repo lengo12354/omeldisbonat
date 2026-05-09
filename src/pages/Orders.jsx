@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
-import { Eye, Printer, Trash2, Search, FileText, ShoppingCart, Calendar, DollarSign } from 'lucide-react';
+import { useProducts } from '../hooks/useProducts';
+import { Eye, Printer, Trash2, Search, FileText, ShoppingCart, Calendar, DollarSign, Edit2, Plus, Minus, Package, Check, X, AlertTriangle } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fmt, fmtFull } from '../utils/format';
 import './Orders.css';
 
 export default function Orders() {
-    const { orders, deleteOrder: removeOrder, loading } = useOrders();
+    const { orders, deleteOrder: removeOrder, updateOrder, loading } = useOrders();
+    const { products, updateStock } = useProducts();
+
     const [search, setSearch] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
+
+    // ─── Edit State ───────────────────────────────────────────────
+    const [editingOrder, setEditingOrder] = useState(null);   // order being edited
+    const [editItems, setEditItems] = useState([]);            // mutable copy of items
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Product search inside edit modal
+    const [productSearch, setProductSearch] = useState('');
+    const [showProductPicker, setShowProductPicker] = useState(false);
 
     const filteredOrders = orders.filter(o =>
         o.client.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,9 +55,139 @@ export default function Orders() {
     });
 
     const handlePrint = (order) => {
-        // Open PrintOrder page in new tab
         window.open(`/orders/print/${order.id}`, '_blank');
     };
+
+    // ─── Open Edit Modal ──────────────────────────────────────────
+    const openEditModal = (order) => {
+        setEditingOrder(order);
+        // Deep copy items so we don't mutate original
+        setEditItems(order.items.map(item => ({ ...item })));
+        setProductSearch('');
+        setShowProductPicker(false);
+    };
+
+    const closeEditModal = () => {
+        setEditingOrder(null);
+        setEditItems([]);
+        setIsSaving(false);
+        setShowProductPicker(false);
+    };
+
+    // ─── Edit Item Handlers ───────────────────────────────────────
+    const handleQtyChange = (index, value) => {
+        const qty = parseFloat(value) || 0;
+        setEditItems(prev => prev.map((item, i) => {
+            if (i !== index) return item;
+            const total = qty * item.price;
+            const cost  = qty * (item.purchasePrice || 0);
+            return { ...item, quantity: qty, total, cost, profit: total - cost };
+        }));
+    };
+
+    const handlePriceChange = (index, value) => {
+        const price = parseFloat(value) || 0;
+        setEditItems(prev => prev.map((item, i) => {
+            if (i !== index) return item;
+            const total = item.quantity * price;
+            const cost  = item.quantity * (item.purchasePrice || 0);
+            return { ...item, price, total, cost, profit: total - cost };
+        }));
+    };
+
+    const removeEditItem = (index) => {
+        setEditItems(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // ─── Add product from picker ──────────────────────────────────
+    const addProductToEdit = (product) => {
+        // If already in list, just bump quantity
+        const existing = editItems.findIndex(i => i.productId === product.id);
+        if (existing !== -1) {
+            handleQtyChange(existing, editItems[existing].quantity + 1);
+        } else {
+            const price = parseFloat(product.price) || 0;
+            const purchasePrice = parseFloat(product.purchase_price) || 0;
+            setEditItems(prev => [...prev, {
+                productId: product.id,
+                name: product.name,
+                price,
+                purchasePrice,
+                quantity: 1,
+                total: price,
+                cost: purchasePrice,
+                profit: price - purchasePrice
+            }]);
+        }
+        setShowProductPicker(false);
+        setProductSearch('');
+    };
+
+    // ─── Save Edit ────────────────────────────────────────────────
+    const handleSaveEdit = async () => {
+        if (!editingOrder || editItems.length === 0) return;
+        setIsSaving(true);
+
+        try {
+            const oldItems = editingOrder.items;
+
+            // Build map of old quantities per productId
+            const oldQtyMap = {};
+            for (const item of oldItems) {
+                if (item.productId) {
+                    oldQtyMap[item.productId] = (oldQtyMap[item.productId] || 0) + item.quantity;
+                }
+            }
+
+            // Build map of new quantities per productId
+            const newQtyMap = {};
+            for (const item of editItems) {
+                if (item.productId) {
+                    newQtyMap[item.productId] = (newQtyMap[item.productId] || 0) + item.quantity;
+                }
+            }
+
+            // Collect all productIds involved
+            const allIds = new Set([...Object.keys(oldQtyMap), ...Object.keys(newQtyMap)]);
+
+            // Apply stock deltas: delta = oldQty - newQty (positive = return to stock)
+            for (const productId of allIds) {
+                const oldQty = oldQtyMap[productId] || 0;
+                const newQty = newQtyMap[productId] || 0;
+                const delta = oldQty - newQty; // positive means we used fewer → return to stock
+                if (delta !== 0) {
+                    await updateStock(productId, delta);
+                }
+            }
+
+            // Recalculate totals
+            const totalAmount  = editItems.reduce((s, i) => s + i.total, 0);
+            const costAmount   = editItems.reduce((s, i) => s + (i.cost || 0), 0);
+            const profitAmount = editItems.reduce((s, i) => s + (i.profit || 0), 0);
+
+            const updatedOrder = {
+                ...editingOrder,
+                items: editItems,
+                totalAmount,
+                costAmount,
+                profitAmount,
+            };
+
+            await updateOrder(editingOrder.id, updatedOrder);
+            closeEditModal();
+        } catch (err) {
+            alert('Erreur lors de la modification : ' + err.message);
+            setIsSaving(false);
+        }
+    };
+
+    // ─── Edit totals ──────────────────────────────────────────────
+    const editTotal  = editItems.reduce((s, i) => s + i.total, 0);
+    const editProfit = editItems.reduce((s, i) => s + (i.profit || 0), 0);
+
+    const filteredProductsForPicker = products.filter(p =>
+        p.name?.toLowerCase().includes(productSearch.toLowerCase())
+    );
 
     return (
         <div className="orders-page fade-in">
@@ -111,7 +253,7 @@ export default function Orders() {
                     <table className="orders-table">
                         <thead>
                             <tr>
-                                <th>Date & Time</th>
+                                <th>Date &amp; Time</th>
                                 <th>Client</th>
                                 <th>Items</th>
                                 <th>Status</th>
@@ -162,6 +304,13 @@ export default function Orders() {
                                                 <Eye size={16} />
                                             </button>
                                             <button
+                                                onClick={() => openEditModal(order)}
+                                                className="action-btn edit-btn"
+                                                title="Modifier le Bon"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
                                                 onClick={() => handlePrint(order)}
                                                 className="action-btn print-btn"
                                                 title="Print Receipt"
@@ -184,6 +333,7 @@ export default function Orders() {
                 </div>
             )}
 
+            {/* ── View Details Modal ── */}
             <Modal
                 isOpen={!!selectedOrder}
                 onClose={() => setSelectedOrder(null)}
@@ -248,6 +398,212 @@ export default function Orders() {
                                 <Printer size={16} /> Print Receipt
                             </button>
                         </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* ── Edit Order Modal ── */}
+            <Modal
+                isOpen={!!editingOrder}
+                onClose={closeEditModal}
+                title=""
+                size="lg"
+            >
+                {editingOrder && (
+                    <div className="edit-order-modal">
+
+                        {/* ── Modal Header info ── */}
+                        <div className="edit-modal-header">
+                            <div className="edit-modal-client">
+                                <div className="edit-modal-icon"><Edit2 size={18} /></div>
+                                <div>
+                                    <div className="edit-modal-client-name">{editingOrder.client.name}</div>
+                                    <div className="edit-modal-date">
+                                        Bon du {new Date(editingOrder.date).toLocaleDateString('fr-MA', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="edit-modal-badge">
+                                {editItems.length} article{editItems.length !== 1 ? 's' : ''}
+                            </div>
+                        </div>
+
+                        {/* ── Items table ── */}
+                        <div className="edit-table-wrapper">
+                            {/* Table header */}
+                            <div className="edit-table-head">
+                                <span className="col-product">Produit</span>
+                                <span className="col-qty">Quantité</span>
+                                <span className="col-price">Prix / unité</span>
+                                <span className="col-total">Sous-total</span>
+                                <span className="col-action"></span>
+                            </div>
+
+                            {/* Table rows */}
+                            <div className="edit-table-body">
+                                {editItems.length === 0 && (
+                                    <div className="edit-empty">
+                                        <AlertTriangle size={28} />
+                                        <span>Aucun article — ajoutez un produit ci-dessous.</span>
+                                    </div>
+                                )}
+                                {editItems.map((item, index) => (
+                                    <div key={index} className="edit-table-row">
+                                        {/* Product name */}
+                                        <div className="col-product edit-product-label">
+                                            <Package size={14} className="edit-product-icon" />
+                                            {item.name}
+                                        </div>
+
+                                        {/* Quantity */}
+                                        <div className="col-qty">
+                                            <div className="edit-qty-controls">
+                                                <button
+                                                    type="button"
+                                                    className="edit-qty-btn"
+                                                    onClick={() => handleQtyChange(index, Math.max(0.5, item.quantity - 0.5))}
+                                                >
+                                                    <Minus size={11} />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    step="0.5"
+                                                    min="0.5"
+                                                    className="edit-qty-input"
+                                                    value={item.quantity}
+                                                    onChange={e => handleQtyChange(index, e.target.value)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="edit-qty-btn"
+                                                    onClick={() => handleQtyChange(index, item.quantity + 0.5)}
+                                                >
+                                                    <Plus size={11} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="col-price">
+                                            <div className="edit-price-wrapper">
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    className="edit-price-input"
+                                                    value={item.price}
+                                                    onChange={e => handlePriceChange(index, e.target.value)}
+                                                />
+                                                <span className="edit-price-unit">MAD</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Subtotal */}
+                                        <div className="col-total">
+                                            <span className="edit-subtotal">{fmt(item.total)}</span>
+                                            <span className="edit-subtotal-unit">MAD</span>
+                                        </div>
+
+                                        {/* Remove */}
+                                        <div className="col-action">
+                                            <button
+                                                type="button"
+                                                className="edit-remove-btn"
+                                                onClick={() => removeEditItem(index)}
+                                                title="Supprimer"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ── Add product ── */}
+                        <div className="edit-add-zone">
+                            {!showProductPicker ? (
+                                <button
+                                    type="button"
+                                    className="edit-add-trigger"
+                                    onClick={() => setShowProductPicker(true)}
+                                >
+                                    <Plus size={15} />
+                                    Ajouter un produit
+                                </button>
+                            ) : (
+                                <div className="edit-product-picker">
+                                    <div className="edit-picker-search">
+                                        <Search size={15} />
+                                        <input
+                                            className="edit-picker-input"
+                                            placeholder="Chercher un produit..."
+                                            autoFocus
+                                            value={productSearch}
+                                            onChange={e => setProductSearch(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="edit-close-picker"
+                                            onClick={() => { setShowProductPicker(false); setProductSearch(''); }}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="edit-picker-list">
+                                        {filteredProductsForPicker.length === 0 && (
+                                            <p className="edit-picker-empty">Aucun produit trouvé</p>
+                                        )}
+                                        {filteredProductsForPicker.map(p => (
+                                            <div
+                                                key={p.id}
+                                                className="edit-picker-item"
+                                                onClick={() => addProductToEdit(p)}
+                                            >
+                                                <div className="edit-picker-dot" />
+                                                <span className="edit-picker-name">{p.name}</span>
+                                                <span className="edit-picker-stock">
+                                                    Stock: {p.stock_quantity ?? '—'}
+                                                </span>
+                                                <span className="edit-picker-price">{p.price} MAD</span>
+                                                <Plus size={13} className="edit-picker-plus" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Summary + Actions ── */}
+                        <div className="edit-footer">
+                            {editItems.length > 0 && (
+                                <div className="edit-totals">
+                                    <div className="edit-total-chip">
+                                        <span className="edit-total-label">Total Vente</span>
+                                        <span className="edit-total-value">{fmt(editTotal)} MAD</span>
+                                    </div>
+                                    <div className="edit-profit-chip" style={{ color: editProfit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                        <span className="edit-total-label">Profit Net</span>
+                                        <span className="edit-profit-value">{editProfit >= 0 ? '+' : ''}{fmt(editProfit)} MAD</span>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="edit-actions">
+                                <button type="button" className="btn btn-outline" onClick={closeEditModal}>
+                                    Annuler
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleSaveEdit}
+                                    disabled={isSaving || editItems.length === 0}
+                                >
+                                    <Check size={16} />
+                                    {isSaving ? 'Sauvegarde...' : 'Sauvegarder les modifications'}
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 )}
             </Modal>

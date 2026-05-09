@@ -15,6 +15,7 @@ export default function NewOrder() {
     const { addOrder } = useOrders();
 
     const [step, setStep] = useState(1); // 1: Client, 2: Products
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
     const [cart, setCart] = useState([]);
 
@@ -88,8 +89,9 @@ export default function NewOrder() {
     const profitMargin = cartTotal > 0 ? ((cartProfit / cartTotal) * 100).toFixed(1) : 0;
 
     const handleConfirmOrder = async () => {
-        if (!selectedClient || cart.length === 0) return;
+        if (!selectedClient || cart.length === 0 || isSubmitting) return;
 
+        setIsSubmitting(true);
         const newOrder = {
             id: Date.now().toString(),
             client: selectedClient,
@@ -104,7 +106,7 @@ export default function NewOrder() {
         try {
             await addOrder(newOrder);
 
-            // نقص stock لكل منتج في الكارت
+            // نقص stock لكل منتج في الكارت (مرة وحدة فقط)
             for (const item of cart) {
                 if (item.productId) {
                     await updateStock(item.productId, -item.quantity);
@@ -114,6 +116,7 @@ export default function NewOrder() {
             navigate('/orders');
         } catch (err) {
             alert('Erreur lors de la sauvegarde: ' + err.message);
+            setIsSubmitting(false);
         }
     };
 
@@ -319,11 +322,11 @@ export default function NewOrder() {
                         </div>
                         <button
                             onClick={handleConfirmOrder}
-                            disabled={cart.length === 0 || !selectedClient}
+                            disabled={cart.length === 0 || !selectedClient || isSubmitting}
                             className="btn btn-primary confirm-btn"
                         >
                             <Check size={18} />
-                            Confirmer le Bon
+                            {isSubmitting ? 'Enregistrement...' : 'Confirmer le Bon'}
                         </button>
                     </div>
                 </div>

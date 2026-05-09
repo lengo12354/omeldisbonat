@@ -107,6 +107,50 @@ export function useOrders() {
         }
     };
 
+    // Update order
+    const updateOrder = async (id, updatedOrder) => {
+        if (useSupabase) {
+            try {
+                const dbOrder = {
+                    client_data: updatedOrder.client,
+                    items: updatedOrder.items,
+                    total_amount: updatedOrder.totalAmount,
+                    cost_amount: updatedOrder.costAmount || 0,
+                    profit_amount: updatedOrder.profitAmount || 0,
+                    status: updatedOrder.status,
+                };
+
+                const { data, error } = await supabase
+                    .from('orders')
+                    .update(dbOrder)
+                    .eq('id', id)
+                    .select();
+
+                if (error) throw error;
+
+                const mapped = {
+                    id: data[0].id,
+                    client: data[0].client_data,
+                    items: data[0].items,
+                    totalAmount: data[0].total_amount,
+                    costAmount: data[0].cost_amount || 0,
+                    profitAmount: data[0].profit_amount || 0,
+                    date: data[0].created_at,
+                    status: data[0].status
+                };
+
+                setSupabaseOrders(prev => prev.map(o => o.id === id ? mapped : o));
+                return mapped;
+            } catch (err) {
+                setError(err.message);
+                console.error('Error updating order:', err);
+                throw err;
+            }
+        } else {
+            setLocalOrders(prev => prev.map(o => o.id === id ? { ...o, ...updatedOrder } : o));
+        }
+    };
+
     // Delete order
     const deleteOrder = async (id) => {
         if (useSupabase) {
@@ -133,6 +177,7 @@ export function useOrders() {
         loading,
         error,
         addOrder,
+        updateOrder,
         deleteOrder,
         refresh: fetchOrders
     };
