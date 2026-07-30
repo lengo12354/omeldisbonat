@@ -8,6 +8,7 @@ import NewOrder from './pages/NewOrder';
 import Orders from './pages/Orders';
 import PrintOrder from './pages/PrintOrder';
 import PickingList from './pages/PickingList';
+import AIOrder from './pages/AIOrder';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="orders/new" element={<NewOrder />} />
           <Route path="orders" element={<Orders />} />
           <Route path="picking-list" element={<PickingList />} />
+          <Route path="ai-order" element={<AIOrder />} />
         </Route>
         {/* Print route outside Layout (no sidebar) */}
         <Route path="/orders/print/:orderId" element={<PrintOrder />} />

@@ -13,6 +13,13 @@ export default function PrintOrder() {
         if (!loading && orders.length > 0) {
             const foundOrder = orders.find(o => o.id === orderId);
             setOrder(foundOrder);
+            
+            // Auto-print when order is loaded successfully
+            if (foundOrder) {
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            }
         } else if (!loading && orders.length === 0 && orderId) {
             // If orders are loaded but empty, maybe we should try to fetch just this order?
             // For now, the hook fetches all.

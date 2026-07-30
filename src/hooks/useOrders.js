@@ -112,6 +112,7 @@ export function useOrders() {
         if (useSupabase) {
             try {
                 const dbOrder = {
+                    client_id: updatedOrder.client.id && updatedOrder.client.id.length > 20 ? updatedOrder.client.id : null,
                     client_data: updatedOrder.client,
                     items: updatedOrder.items,
                     total_amount: updatedOrder.totalAmount,

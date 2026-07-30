@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { useProducts } from '../hooks/useProducts';
-import { Eye, Printer, Trash2, Search, FileText, ShoppingCart, Calendar, DollarSign, Edit2, Plus, Minus, Package, Check, X, AlertTriangle } from 'lucide-react';
+import { useClients } from '../hooks/useClients';
+import { Eye, Printer, Trash2, Search, FileText, ShoppingCart, Calendar, DollarSign, Edit2, Plus, Minus, Package, Check, X, AlertTriangle, User } from 'lucide-react';
 import Modal from '../components/Modal';
 import { fmt, fmtFull } from '../utils/format';
 import './Orders.css';
@@ -9,6 +10,7 @@ import './Orders.css';
 export default function Orders() {
     const { orders, deleteOrder: removeOrder, updateOrder, loading } = useOrders();
     const { products, updateStock } = useProducts();
+    const { clients } = useClients();
 
     const [search, setSearch] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -16,7 +18,12 @@ export default function Orders() {
     // ─── Edit State ───────────────────────────────────────────────
     const [editingOrder, setEditingOrder] = useState(null);   // order being edited
     const [editItems, setEditItems] = useState([]);            // mutable copy of items
+    const [editClient, setEditClient] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Client picker state
+    const [showClientPicker, setShowClientPicker] = useState(false);
+    const [clientSearch, setClientSearch] = useState('');
 
     // Product search inside edit modal
     const [productSearch, setProductSearch] = useState('');
@@ -47,12 +54,12 @@ export default function Orders() {
         }
     };
 
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
     const todayOrders = orders.filter(o => {
         const orderDate = new Date(o.date).toDateString();
         const today = new Date().toDateString();
         return orderDate === today;
     });
+    const todayRevenue = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
 
     const handlePrint = (order) => {
         window.open(`/orders/print/${order.id}`, '_blank');
@@ -63,15 +70,20 @@ export default function Orders() {
         setEditingOrder(order);
         // Deep copy items so we don't mutate original
         setEditItems(order.items.map(item => ({ ...item })));
+        setEditClient(order.client);
         setProductSearch('');
         setShowProductPicker(false);
+        setShowClientPicker(false);
+        setClientSearch('');
     };
 
     const closeEditModal = () => {
         setEditingOrder(null);
         setEditItems([]);
+        setEditClient(null);
         setIsSaving(false);
         setShowProductPicker(false);
+        setShowClientPicker(false);
     };
 
     // ─── Edit Item Handlers ───────────────────────────────────────
@@ -167,6 +179,7 @@ export default function Orders() {
 
             const updatedOrder = {
                 ...editingOrder,
+                client: editClient,
                 items: editItems,
                 totalAmount,
                 costAmount,
@@ -234,8 +247,8 @@ export default function Orders() {
                 </div>
                 <div className="stat-item">
                     <DollarSign size={20} />
-                    <span className="stat-label">Total Revenue</span>
-                    <span className="stat-value" title={fmtFull(totalRevenue) + ' MAD'}>{fmt(totalRevenue)} MAD</span>
+                    <span className="stat-label">Today's Revenue</span>
+                    <span className="stat-value" title={`Real today revenue: ${fmtFull(todayRevenue)} DH`}>{fmt(todayRevenue)} MAD</span>
                 </div>
             </div>
 
@@ -310,13 +323,15 @@ export default function Orders() {
                                             >
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button
-                                                onClick={() => handlePrint(order)}
+                                            <a
+                                                href={`/orders/print/${order.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="action-btn print-btn"
                                                 title="Print Receipt"
                                             >
                                                 <Printer size={16} />
-                                            </button>
+                                            </a>
                                             <button
                                                 onClick={() => deleteOrder(order.id)}
                                                 className="action-btn delete-btn"
@@ -388,15 +403,16 @@ export default function Orders() {
                         </div>
 
                         <div className="modal-actions">
-                            <button
+                            <a
+                                href={`/orders/print/${selectedOrder.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="btn btn-primary"
-                                onClick={() => {
-                                    handlePrint(selectedOrder);
-                                    setSelectedOrder(null);
-                                }}
+                                onClick={() => setSelectedOrder(null)}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
                             >
                                 <Printer size={16} /> Print Receipt
-                            </button>
+                            </a>
                         </div>
                     </div>
                 )}
@@ -413,13 +429,62 @@ export default function Orders() {
                     <div className="edit-order-modal">
 
                         {/* ── Modal Header info ── */}
-                        <div className="edit-modal-header">
-                            <div className="edit-modal-client">
-                                <div className="edit-modal-icon"><Edit2 size={18} /></div>
-                                <div>
-                                    <div className="edit-modal-client-name">{editingOrder.client.name}</div>
-                                    <div className="edit-modal-date">
-                                        Bon du {new Date(editingOrder.date).toLocaleDateString('fr-MA', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        <div className="edit-modal-header" style={{ alignItems: 'flex-start' }}>
+                            <div className="edit-modal-client" style={{ flex: 1, position: 'relative' }}>
+                                <div className="edit-modal-icon"><User size={18} /></div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                    {showClientPicker ? (
+                                        <div className="edit-product-picker" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, width: '300px', marginTop: '10px' }}>
+                                            <div className="edit-picker-search">
+                                                <Search size={15} />
+                                                <input
+                                                    className="edit-picker-input"
+                                                    placeholder="Chercher un client..."
+                                                    autoFocus
+                                                    value={clientSearch}
+                                                    onChange={e => setClientSearch(e.target.value)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="edit-close-picker"
+                                                    onClick={() => { setShowClientPicker(false); setClientSearch(''); }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                            <div className="edit-picker-list">
+                                                {clients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
+                                                    <div
+                                                        key={c.id}
+                                                        className="edit-picker-item"
+                                                        onClick={() => { setEditClient(c); setShowClientPicker(false); }}
+                                                    >
+                                                        <User size={14} style={{ color: 'var(--primary-light)' }} />
+                                                        <span className="edit-picker-name">{c.name}</span>
+                                                        <span className="edit-picker-stock">{c.phone}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div className="edit-modal-client-name" style={{ margin: 0 }}>{editClient?.name}</div>
+                                            <button 
+                                                className="btn btn-outline" 
+                                                style={{ padding: '2px 8px', fontSize: '0.75rem', height: 'auto' }}
+                                                onClick={() => setShowClientPicker(true)}
+                                            >
+                                                Changer
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                            {editClient?.phone}
+                                        </div>
+                                        <div className="edit-modal-date">
+                                            Bon du {new Date(editingOrder.date).toLocaleDateString('fr-MA', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

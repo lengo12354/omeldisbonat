@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, Package, Tags, PlusCircle, ClipboardList } from 'lucide-react';
+import { Home, Users, Package, Tags, PlusCircle, ClipboardList, Sparkles } from 'lucide-react';
 import logo from '../assets/logo-print.png';
 import './Layout.css';
 
@@ -67,6 +67,13 @@ export default function Layout() {
                     >
                         <ClipboardList size={20} />
                         <span>Picking List</span>
+                    </Link>
+                    <Link
+                        to="/ai-order"
+                        className={`${isActive('/ai-order') ? 'active' : ''} ai-nav-link`}
+                    >
+                        <Sparkles size={20} />
+                        <span>Bon par IA ✨</span>
                     </Link>
                 </nav>
             </aside>
