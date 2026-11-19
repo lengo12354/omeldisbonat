@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   AI ORDER PAGE — Full Stylesheet
+   AI ORDER PAGE: Full Stylesheet
 ══════════════════════════════════════════ */
 
 .ai-order-page {
@@ -27,19 +27,19 @@
     width: 52px;
     height: 52px;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #86bfff, #5f98df);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 8px 24px rgba(134, 191, 255, 0.4);
     flex-shrink: 0;
 }
 
 .ai-page-title {
     font-size: 1.75rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #818cf8, #c084fc);
+    background: linear-gradient(135deg, #c5e89e, #d1edae);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -104,7 +104,7 @@
 .ai-progress-step.active .ai-progress-dot {
     background: linear-gradient(135deg, var(--primary), var(--accent));
     color: white;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 10px rgba(134, 191, 255, 0.5);
 }
 
 .ai-progress-step.done .ai-progress-dot {
@@ -141,8 +141,8 @@
 .ai-drop-zone:hover,
 .ai-drop-zone.dragging {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: rgba(134, 191, 255, 0.05);
+    box-shadow: 0 0 0 4px rgba(134, 191, 255, 0.1);
 }
 
 .ai-drop-zone.has-image {
@@ -234,13 +234,13 @@
 .ai-analyze-btn {
     padding: 0.75rem 1.75rem;
     font-size: 0.9375rem;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    background: linear-gradient(135deg, #86bfff, #5f98df);
+    box-shadow: 0 8px 24px rgba(134, 191, 255, 0.4);
 }
 
 .ai-analyze-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 12px 28px rgba(134, 191, 255, 0.5);
 }
 
 /* Reading indicator */
@@ -252,8 +252,8 @@
     font-size: 0.9375rem;
     font-weight: 500;
     padding: 0.75rem 1.25rem;
-    background: rgba(99, 102, 241, 0.08);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: rgba(134, 191, 255, 0.08);
+    border: 1px solid rgba(134, 191, 255, 0.2);
     border-radius: var(--radius-lg);
 }
 
@@ -295,7 +295,7 @@
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 700;
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(134, 191, 255, 0.15);
     color: var(--primary-light);
     width: fit-content;
     text-transform: uppercase;
@@ -358,7 +358,7 @@
 
 .ai-candidate-btn:hover {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.08);
+    background: rgba(134, 191, 255, 0.08);
     transform: translateX(4px);
 }
 
@@ -371,7 +371,7 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #86bfff, #5f98df);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -380,7 +380,7 @@
 }
 
 .ai-candidate-avatar.product {
-    background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    background: linear-gradient(135deg, #0ea5e9, #85bfae);
 }
 
 .ai-candidate-info {
@@ -478,8 +478,8 @@
 
 /* ── Preview Card ── */
 .ai-preview-card {
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1), 0 16px 48px rgba(0, 0, 0, 0.3);
+    border-color: rgba(134, 191, 255, 0.3);
+    box-shadow: 0 0 0 1px rgba(134, 191, 255, 0.1), 0 16px 48px rgba(0, 0, 0, 0.3);
 }
 
 .ai-preview-client {
@@ -487,8 +487,8 @@
     align-items: center;
     gap: 0.875rem;
     padding: 0.875rem 1rem;
-    background: rgba(99, 102, 241, 0.08);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: rgba(134, 191, 255, 0.08);
+    border: 1px solid rgba(134, 191, 255, 0.2);
     border-radius: var(--radius-lg);
 }
 
@@ -680,3 +680,7 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+.ai-step-label { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.ai-drop-hint { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 5px 11px; }
+.ai-drop-hint > span { display: inline-flex; align-items: center; gap: 4px; }
+@media (max-width: 700px) { .ai-step-label { flex-direction: column; } }

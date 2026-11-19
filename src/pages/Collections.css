@@ -16,7 +16,7 @@
 .page-title {
     font-size: 2.25rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    background: linear-gradient(135deg, #86bfff 0%, #a9d1ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -129,7 +129,7 @@
     width: 56px;
     height: 56px;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.2) 0%, rgba(134, 191, 255, 0.2) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -140,7 +140,7 @@
 
 .collection-card:hover .collection-icon {
     transform: scale(1.1) rotate(5deg);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.3) 0%, rgba(134, 191, 255, 0.3) 100%);
 }
 
 .collection-details {

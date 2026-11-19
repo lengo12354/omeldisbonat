@@ -45,10 +45,7 @@ ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
--- Create policies (allow all operations for now - you can tighten this later)
-CREATE POLICY "Enable all operations for clients" ON clients FOR ALL USING (true);
-CREATE POLICY "Enable all operations for products" ON products FOR ALL USING (true);
-CREATE POLICY "Enable all operations for orders" ON orders FOR ALL USING (true);
+-- Apply supabase/migrations/20261118000000_auth_settings.sql for member-only policies.
 
 -- Create indexes for better performance
 CREATE INDEX idx_clients_name ON clients(name);
@@ -68,8 +65,7 @@ CREATE TABLE IF NOT EXISTS collections (
 -- Enable RLS for collections
 ALTER TABLE collections ENABLE ROW LEVEL SECURITY;
 
--- Create policy for collections
-CREATE POLICY "Enable all operations for collections" ON collections FOR ALL USING (true);
+-- Collection access is defined in the auth/settings migration.
 
 -- Create index for collections
 CREATE INDEX idx_collections_name ON collections(name);

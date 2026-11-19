@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { useProducts } from '../hooks/useProducts';
 import { useClients } from '../hooks/useClients';
@@ -8,7 +8,7 @@ import { fmt, fmtFull } from '../utils/format';
 import './Orders.css';
 
 export default function Orders() {
-    const { orders, deleteOrder: removeOrder, updateOrder, loading } = useOrders();
+    const { orders, deleteOrder: removeOrder, updateOrder, loading, error, refresh } = useOrders();
     const { products, updateStock } = useProducts();
     const { clients } = useClients();
 
@@ -60,10 +60,6 @@ export default function Orders() {
         return orderDate === today;
     });
     const todayRevenue = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-    const handlePrint = (order) => {
-        window.open(`/orders/print/${order.id}`, '_blank');
-    };
 
     // ─── Open Edit Modal ──────────────────────────────────────────
     const openEditModal = (order) => {
@@ -253,7 +249,10 @@ export default function Orders() {
             </div>
 
             {/* Content */}
-            {filteredOrders.length === 0 ? (
+            {error && <div className="orders-load-error" role="alert"><AlertTriangle size={18} /><span>Impossible de charger toutes les commandes. Les données affichées peuvent être incomplètes.</span><button type="button" onClick={refresh}>Réessayer</button></div>}
+            {loading && orders.length === 0 ? (
+                <div className="empty-state"><div className="loading-spinner" /><p>Chargement des commandes…</p></div>
+            ) : error && orders.length === 0 ? null : filteredOrders.length === 0 ? (
                 <div className="empty-state">
                     <div className="empty-icon">
                         <FileText size={64} />
@@ -509,7 +508,7 @@ export default function Orders() {
                                 {editItems.length === 0 && (
                                     <div className="edit-empty">
                                         <AlertTriangle size={28} />
-                                        <span>Aucun article — ajoutez un produit ci-dessous.</span>
+                                        <span>Aucun article. Ajoutez un produit ci-dessous.</span>
                                     </div>
                                 )}
                                 {editItems.map((item, index) => (
@@ -628,7 +627,7 @@ export default function Orders() {
                                                 <div className="edit-picker-dot" />
                                                 <span className="edit-picker-name">{p.name}</span>
                                                 <span className="edit-picker-stock">
-                                                    Stock: {p.stock_quantity ?? '—'}
+                                                    Stock: {p.stock_quantity ?? 'non renseigné'}
                                                 </span>
                                                 <span className="edit-picker-price">{p.price} MAD</span>
                                                 <Plus size={13} className="edit-picker-plus" />

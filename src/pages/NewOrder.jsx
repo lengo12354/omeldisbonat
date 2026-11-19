@@ -53,9 +53,9 @@ export default function NewOrder() {
         const purchasePrice = parseFloat(currentProduct.purchase_price) || 0;
         const quantity = parseFloat(itemForm.quantity) || 1;
 
-        // ❌ منع البيع بأقل من ثمن الشراء
+        // منع البيع بأقل من ثمن الشراء
         if (purchasePrice > 0 && sellPrice < purchasePrice) {
-            alert(`⚠️ Prix de vente invalide!\nLe prix de vente (${sellPrice} MAD) ne peut pas être inférieur au prix d'achat (${purchasePrice} MAD).`);
+            alert(`Prix de vente invalide!\nLe prix de vente (${sellPrice} MAD) ne peut pas être inférieur au prix d'achat (${purchasePrice} MAD).`);
             return;
         }
         const totalSell = sellPrice * quantity;
@@ -367,7 +367,7 @@ export default function NewOrder() {
                         />
                         {currentProduct?.purchase_price > 0 && (
                             <span className="form-hint" style={{ color: 'var(--warning)' }}>
-                                ⚠️ Prix minimum: {parseFloat(currentProduct.purchase_price).toFixed(2)} MAD (ras el mal)
+                                <AlertTriangle size={14} aria-hidden="true" /> Prix minimum: {parseFloat(currentProduct.purchase_price).toFixed(2)} MAD (ras el mal)
                             </span>
                         )}
                     </div>

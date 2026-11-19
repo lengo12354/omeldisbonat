@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -10,26 +10,34 @@ import { useLocalStorage } from './useLocalStorage';
 export function useOrders() {
     const [localOrders, setLocalOrders] = useLocalStorage('orders', []);
     const [supabaseOrders, setSupabaseOrders] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(() => isSupabaseConfigured());
     const [error, setError] = useState(null);
 
     const useSupabase = isSupabaseConfigured();
 
     // Fetch from Supabase
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         if (!useSupabase) return;
 
         setLoading(true);
+        setError(null);
         try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
+            const pageSize = 500;
+            const allRows = [];
+            for (let offset = 0; ; offset += pageSize) {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .order('id', { ascending: false })
+                    .range(offset, offset + pageSize - 1);
+                if (error) throw error;
+                allRows.push(...(data || []));
+                if (!data || data.length < pageSize) break;
+            }
 
             // Map DB format back to UI format
-            const mappedData = data.map(o => ({
+            const mappedData = allRows.map(o => ({
                 id: o.id,
                 client: o.client_data,
                 items: o.items,
@@ -47,13 +55,13 @@ export function useOrders() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [useSupabase]);
 
     useEffect(() => {
         if (useSupabase) {
             fetchOrders();
         }
-    }, [useSupabase]);
+    }, [fetchOrders, useSupabase]);
 
     // Get orders (Supabase or localStorage)
     const orders = useSupabase ? supabaseOrders : localOrders;

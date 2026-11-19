@@ -19,7 +19,7 @@
 .page-title {
     font-size: 2.25rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    background: linear-gradient(135deg, #86bfff 0%, #a9d1ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -49,7 +49,7 @@
 .step.active {
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     border-color: transparent;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(134, 191, 255, 0.4);
 }
 
 .step-number {
@@ -115,7 +115,7 @@
 .panel-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.05) 0%, rgba(134, 191, 255, 0.05) 100%);
     display: flex;
     gap: 0.75rem;
     align-items: center;
@@ -151,7 +151,7 @@
 .search-input:focus {
     background: var(--surface) !important;
     border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(134, 191, 255, 0.1) !important;
 }
 
 .back-btn {
@@ -198,7 +198,7 @@
 }
 
 .client-item:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(134, 191, 255, 0.1);
     border-color: var(--primary);
     transform: translateX(4px);
 }
@@ -207,7 +207,7 @@
     width: 44px;
     height: 44px;
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.2) 0%, rgba(134, 191, 255, 0.2) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -216,7 +216,7 @@
 }
 
 .client-item:hover .client-avatar {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.3) 0%, rgba(134, 191, 255, 0.3) 100%);
     transform: scale(1.1);
 }
 
@@ -268,7 +268,7 @@
 }
 
 .product-item:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(134, 191, 255, 0.1);
     border-color: var(--primary);
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
@@ -278,7 +278,7 @@
     width: 64px;
     height: 64px;
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.2) 0%, rgba(134, 191, 255, 0.2) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -390,7 +390,7 @@
 .cart-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(134, 191, 255, 0.05) 0%, rgba(134, 191, 255, 0.05) 100%);
 }
 
 .cart-header h3 {
@@ -438,7 +438,7 @@
 }
 
 .change-btn:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(134, 191, 255, 0.1);
     text-decoration: underline;
 }
 
@@ -546,7 +546,7 @@
 .cart-profit-summary {
     padding: 0.875rem 1.25rem;
     border-top: 1px solid var(--border);
-    background: rgba(99, 102, 241, 0.04);
+    background: rgba(134, 191, 255, 0.04);
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -681,8 +681,8 @@
 }
 
 .modal-cost-info {
-    background: rgba(99, 102, 241, 0.06);
-    border-color: rgba(99, 102, 241, 0.2);
+    background: rgba(134, 191, 255, 0.06);
+    border-color: rgba(134, 191, 255, 0.2);
     color: var(--text-muted);
 }
 

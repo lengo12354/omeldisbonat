@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrders } from '../hooks/useOrders';
-import { ClipboardList, Printer, RefreshCw, FileDown, Calendar } from 'lucide-react';
+import { ClipboardList, Printer, RefreshCw, FileDown } from 'lucide-react';
+import AppDatePicker from '../components/AppDatePicker';
 
 import './PickingList.css';
 
@@ -126,7 +127,6 @@ export default function PickingList() {
 
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
 
             // Create chunks
             const chunks = [];
@@ -234,21 +234,7 @@ export default function PickingList() {
                 <div className="filters-grid">
                     <div className="filter-group">
                         <label>Période (Du &rarr; Au)</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input
-                                type="date"
-                                className="input"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                            <span style={{ alignSelf: 'center', color: 'var(--text-muted)' }}>à</span>
-                            <input
-                                type="date"
-                                className="input"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                        </div>
+                        <div className="picking-date-range"><AppDatePicker value={startDate} onChange={setStartDate} label="Date de début" /><span>à</span><AppDatePicker value={endDate} onChange={setEndDate} label="Date de fin" /></div>
                     </div>
 
 

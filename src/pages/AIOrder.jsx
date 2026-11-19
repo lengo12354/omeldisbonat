@@ -8,7 +8,7 @@ import { fmt } from '../utils/format';
 import {
     Sparkles, Upload, ImagePlus, User, Package,
     Check, X, ChevronRight, ShoppingCart,
-    AlertCircle, Loader2, RefreshCw, CheckCircle2, ChevronDown
+    AlertCircle, Loader2, RefreshCw, CheckCircle2, ChevronDown, Camera, Eye, Smartphone, FileText, ReceiptText
 } from 'lucide-react';
 import './AIOrder.css';
 
@@ -27,7 +27,7 @@ const STEP = {
 };
 
 /* ─────────────────────────────────────────────
-   HELPER — fuzzy match client by name
+   HELPER: fuzzy match client by name
 ───────────────────────────────────────────── */
 function matchClient(name, clients) {
     if (!name) return [];
@@ -170,7 +170,7 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
 
             const raw = await callGemini({ prompt, imageBase64, imageMimeType: imageMime });
 
-            // Parse JSON — strip any markdown if model adds it
+            // Parse JSON and strip any markdown if model adds it
             const jsonStr = raw.replace(/```json|```/g, '').trim();
             const parsed = JSON.parse(jsonStr);
 
@@ -300,7 +300,7 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
                     </div>
                     <div>
                         <h1 className="ai-page-title">Bon par IA</h1>
-                        <p className="ai-page-subtitle">Donne une photo — l'IA crée le bon</p>
+                        <p className="ai-page-subtitle">Donne une photo, l'IA crée le bon</p>
                     </div>
                 </div>
                 {step !== STEP.IDLE && step !== STEP.DONE && (
@@ -313,11 +313,12 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
             {/* Progress bar */}
             <div className="ai-progress">
                 {[
-                    { key: 'image', label: '📸 Image' },
-                    { key: 'client', label: '👤 Client' },
-                    { key: 'articles', label: '📦 Articles' },
-                    { key: 'apercu', label: '👁️ Aperçu' },
+                    { key: 'image', label: 'Image', icon: Camera },
+                    { key: 'client', label: 'Client', icon: User },
+                    { key: 'articles', label: 'Articles', icon: Package },
+                    { key: 'apercu', label: 'Aperçu', icon: Eye },
                 ].map((s, i) => {
+                    const StepIcon = s.icon;
                     const activeIndex =
                         step === STEP.IDLE || step === STEP.READING ? 0
                             : step === STEP.CONFIRM_CLIENT ? 1
@@ -326,14 +327,14 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
                     return (
                         <div key={s.key} className={`ai-progress-step ${i <= activeIndex ? 'active' : ''} ${i < activeIndex ? 'done' : ''}`}>
                             <div className="ai-progress-dot">{i < activeIndex ? <Check size={12} /> : i + 1}</div>
-                            <span>{s.label}</span>
+                            <span className="ai-step-label"><StepIcon size={13} aria-hidden="true" />{s.label}</span>
                             {i < 3 && <ChevronRight size={14} className="ai-progress-arrow" />}
                         </div>
                     );
                 })}
             </div>
 
-            {/* ── STEP: IDLE — Upload zone ── */}
+            {/* STEP: IDLE, upload zone */}
             {(step === STEP.IDLE || step === STEP.READING) && (
                 <div className="ai-upload-section">
                     <div
@@ -360,7 +361,7 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
                                 <ImagePlus size={48} className="ai-drop-icon" />
                                 <p className="ai-drop-title">Glisse la photo ici</p>
                                 <p className="ai-drop-sub">ou clique pour choisir un fichier</p>
-                                <p className="ai-drop-hint">📱 WhatsApp · 📝 Note · 🧾 Bon manuscrit</p>
+                                <p className="ai-drop-hint"><span><Smartphone size={14} />WhatsApp</span><span><FileText size={14} />Note</span><span><ReceiptText size={14} />Bon manuscrit</span></p>
                             </div>
                         )}
                     </div>
@@ -607,7 +608,7 @@ function ItemConfirmStep({ aiItem, itemIndex, totalItems, products, onConfirm, o
                             <div className="ai-candidate-avatar product"><Package size={18} /></div>
                             <div className="ai-candidate-info">
                                 <span className="ai-candidate-name">{p.name}</span>
-                                <span className="ai-candidate-phone">{p.price} MAD · Stock: {p.stock_quantity ?? '—'}</span>
+                                <span className="ai-candidate-phone">{p.price} MAD · Stock: {p.stock_quantity ?? 'non renseigné'}</span>
                             </div>
                             {selectedProduct?.id === p.id && <Check size={16} className="ai-candidate-check" />}
                         </button>
@@ -737,7 +738,7 @@ function PreviewStep({ client, items, total, profit, onAccept, onReset }) {
                     <X size={16} /> Annuler
                 </button>
                 <button className="btn btn-primary ai-accept-btn" onClick={onAccept}>
-                    <CheckCircle2 size={18} /> Accepté — Enregistrer
+                    <CheckCircle2 size={18} /> Accepter et enregistrer
                 </button>
             </div>
         </div>

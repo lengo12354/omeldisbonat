@@ -1,496 +1,159 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useClients } from '../hooks/useClients';
 import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
-import {
-    Users, Package, ShoppingCart, TrendingUp, DollarSign,
-    Activity, AlertTriangle, TrendingDown, BarChart3, Zap,
-    ArrowUpRight, Warehouse, Award, PieChart
-} from 'lucide-react';
-import './Dashboard.css';
+import { Users, UserRound, Package, ShoppingBag, TrendingUp, ArrowUpRight, ArrowRight, Plus, CircleDollarSign, AlertTriangle, ReceiptText } from 'lucide-react';
+import AppSelect from '../components/AppSelect';
 import { fmt, fmtFull } from '../utils/format';
+import './Dashboard.css';
+
+const number = value => Number(value) || 0;
+
+function Money({ value }) {
+    return <span title={`${fmtFull(value)} MAD`}>{fmt(value)}<small className="money-unit"> MAD</small></span>;
+}
+
+function EmptyPanel({ icon, children }) {
+    const Icon = icon || Package;
+    return <div className="overview-empty"><Icon size={27} strokeWidth={1.3} /><p>{children}</p></div>;
+}
+
+function RevenueChart({ months, loading }) {
+    const max = Math.max(...months.flatMap(month => [month.revenue, month.profit]), 1);
+    const hasData = months.some(month => month.count > 0);
+    const [activeMonth, setActiveMonth] = useState(null);
+    return (
+        <div className="revenue-bars" aria-busy={loading} aria-label="Revenus et profits mensuels en MAD">
+            {hasData ? months.map((month, index) => (
+                <div className={`revenue-month ${activeMonth === index ? 'revenue-month--active' : ''}`} key={index} tabIndex={0} onMouseEnter={() => setActiveMonth(index)} onMouseLeave={() => setActiveMonth(null)} onFocus={() => setActiveMonth(index)} onBlur={() => setActiveMonth(null)} aria-label={`${month.label} : chiffre d’affaires ${fmtFull(month.revenue)} MAD, profit ${fmtFull(month.profit)} MAD, ${month.count} commandes`}>
+                    <div className="revenue-pair">
+                        <div className="revenue-bar revenue-bar--sales" style={{ height: `${Math.max(month.revenue > 0 ? 3 : 0, month.revenue / max * 100)}%` }} />
+                        <div className="revenue-bar revenue-bar--profit" style={{ height: `${Math.max(month.profit > 0 ? 3 : 0, month.profit / max * 100)}%` }} />
+                    </div>
+                    <div className="revenue-month-label"><span>{month.label}</span>{month.count > 0 && <small>{month.count}</small>}</div>
+                </div>
+            )) : <div className="chart-no-data">{loading ? 'Chargement des données…' : 'Vos ventes apparaîtront ici'}</div>}
+            {activeMonth !== null && hasData && <div className="revenue-tooltip" role="status"><strong>{months[activeMonth].label}</strong><span><i className="legend-dot" />Revenus <b>{fmtFull(months[activeMonth].revenue)} MAD</b></span><span><i className="legend-dot legend-dot--mint" />Profit <b>{fmtFull(months[activeMonth].profit)} MAD</b></span><small>{months[activeMonth].count} commandes</small></div>}
+        </div>
+    );
+}
 
 export default function Dashboard() {
-    const { clients, loading: clientsLoading } = useClients();
-    const { products, loading: productsLoading } = useProducts();
-    const { orders, loading: ordersLoading } = useOrders();
+    const { clients, loading: clientsLoading, error: clientsError } = useClients();
+    const { products, loading: productsLoading, error: productsError } = useProducts();
+    const { orders, loading: ordersLoading, error: ordersError } = useOrders();
+    const [period, setPeriod] = useState('all');
+    const [monthCount, setMonthCount] = useState(7);
+    const [productTab, setProductTab] = useState('top');
 
-    // ====== Calculs statistiques ======
+    const periodOrders = useMemo(() => {
+        if (period === 'all') return orders;
+        const now = new Date();
+        const start = period === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : new Date(now.getFullYear(), 0, 1);
+        return orders.filter(order => new Date(order.date) >= start && new Date(order.date) <= now);
+    }, [orders, period]);
+
     const stats = useMemo(() => {
-        const today = new Date().toDateString();
-        const todaysOrders = orders.filter(o => new Date(o.date).toDateString() === today);
-
-        const totalRevenue = orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
-        const totalProfit = orders.reduce((acc, o) => acc + (o.profitAmount || 0), 0);
-        const totalCost = orders.reduce((acc, o) => acc + (o.costAmount || 0), 0);
-        const todayRevenue = todaysOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
-        const todayProfit = todaysOrders.reduce((acc, o) => acc + (o.profitAmount || 0), 0);
-
-        const outOfStock = products.filter(p => (p.stock_quantity || 0) === 0);
-        const lowStock = products.filter(p => (p.stock_quantity || 0) > 0 && (p.stock_quantity || 0) <= (p.reorder_level || 5));
-        const stockValue = products.reduce((sum, p) => sum + ((p.purchase_price || 0) * (p.stock_quantity || 0)), 0);
-
-        const marginPct = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0.0';
-
-        return {
-            todaysOrders, totalRevenue, totalProfit, totalCost,
-            todayRevenue, todayProfit, outOfStock, lowStock,
-            stockValue, marginPct
-        };
-    }, [orders, products]);
-
-    // ====== Profit 7 derniers mois ======
-    const last7Months = useMemo(() => {
-        const months = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            const monthYear = `${d.getFullYear()}-${d.getMonth()}`;
-
-            const monthOrders = orders.filter(o => {
-                const od = new Date(o.date);
-                return `${od.getFullYear()}-${od.getMonth()}` === monthYear;
-            });
-
-            months.push({
-                label: d.toLocaleDateString('fr-MA', { month: 'short' }),
-                revenue: monthOrders.reduce((s, o) => s + (o.totalAmount || 0), 0),
-                profit: monthOrders.reduce((s, o) => s + (o.profitAmount || 0), 0),
-                count: monthOrders.length
-            });
-        }
-        return months;
-    }, [orders]);
-
-    const maxRevenue = Math.max(...last7Months.map(m => m.revenue), 1);
-
-    // ====== Top produits vendus + moins vendus ======
-    const { topProducts, bottomProducts } = useMemo(() => {
-        const productSales = {};
-        orders.forEach(order => {
+        const revenue = periodOrders.reduce((sum, order) => sum + number(order.totalAmount), 0);
+        const profit = periodOrders.reduce((sum, order) => sum + number(order.profitAmount), 0);
+        const cost = periodOrders.reduce((sum, order) => sum + number(order.costAmount), 0);
+        const todayOrders = orders.filter(order => new Date(order.date).toDateString() === new Date().toDateString());
+        const outOfStock = products.filter(product => number(product.stock_quantity) <= 0);
+        const lowStock = products.filter(product => number(product.stock_quantity) > 0 && number(product.stock_quantity) <= (product.reorder_level ?? 5));
+        const stockValue = products.reduce((sum, product) => sum + number(product.purchase_price) * number(product.stock_quantity), 0);
+        const clientMap = new Map();
+        const sales = new Map();
+        let itemCount = 0;
+        periodOrders.forEach(order => {
+            if (order.client?.name) {
+                const key = order.client.id || order.client.name;
+                const client = clientMap.get(key) || { name: order.client.name, orders: 0, revenue: 0, profit: 0 };
+                client.orders += 1;
+                client.revenue += number(order.totalAmount);
+                client.profit += number(order.profitAmount);
+                clientMap.set(key, client);
+            }
             (order.items || []).forEach(item => {
-                if (!productSales[item.name]) {
-                    productSales[item.name] = { name: item.name, qty: 0, revenue: 0, profit: 0 };
-                }
-                productSales[item.name].qty += item.quantity || 0;
-                productSales[item.name].revenue += item.total || 0;
-                productSales[item.name].profit += item.profit || 0;
+                const key = item.id || item.name;
+                const product = sales.get(key) || { name: item.name, quantity: 0, revenue: 0, profit: 0 };
+                product.quantity += number(item.quantity);
+                product.revenue += number(item.total);
+                product.profit += number(item.profit);
+                itemCount += number(item.quantity);
+                sales.set(key, product);
             });
         });
-        const sorted = Object.values(productSales).sort((a, b) => b.qty - a.qty);
-        return {
-            topProducts: sorted.slice(0, 5),
-            bottomProducts: sorted.slice(-5).reverse()
+        const rankedClients = [...clientMap.values()].sort((a, b) => b.revenue - a.revenue);
+        const rankedProducts = [...sales.values()].sort((a, b) => b.quantity - a.quantity);
+        const returning = rankedClients.filter(client => client.orders > 1).length;
+        return { revenue, profit, cost, todayOrders, outOfStock, lowStock, stockValue, rankedClients, rankedProducts, returning,
+            margin: revenue > 0 ? profit / revenue * 100 : 0,
+            average: periodOrders.length ? revenue / periodOrders.length : 0,
+            averageItems: periodOrders.length ? itemCount / periodOrders.length : 0,
+            returningPct: rankedClients.length ? returning / rankedClients.length * 100 : 0,
         };
-    }, [orders]);
+    }, [orders, periodOrders, products]);
 
-    // ====== Top Clients (par total dépensé) ======
-    const topClients = useMemo(() => {
-        const clientMap = {};
-        orders.forEach(order => {
-            const name = order.client?.name;
-            if (!name) return;
-            if (!clientMap[name]) {
-                clientMap[name] = { name, totalSpent: 0, profit: 0, orders: 0 };
-            }
-            clientMap[name].totalSpent += order.totalAmount || 0;
-            clientMap[name].profit += order.profitAmount || 0;
-            clientMap[name].orders += 1;
+    const months = useMemo(() => Array.from({ length: monthCount }, (_, index) => {
+        const now = new Date();
+        const date = new Date(now.getFullYear(), now.getMonth() - monthCount + index + 1, 1);
+        const monthOrders = periodOrders.filter(order => {
+            const orderDate = new Date(order.date);
+            return orderDate.getFullYear() === date.getFullYear() && orderDate.getMonth() === date.getMonth();
         });
-        return Object.values(clientMap)
-            .sort((a, b) => b.totalSpent - a.totalSpent)
-            .slice(0, 8);
-    }, [orders]);
+        return { label: date.toLocaleDateString('fr-MA', { month: 'short' }), count: monthOrders.length,
+            revenue: monthOrders.reduce((sum, order) => sum + number(order.totalAmount), 0),
+            profit: monthOrders.reduce((sum, order) => sum + number(order.profitAmount), 0) };
+    }), [periodOrders, monthCount]);
 
-    // ====== Advanced Insights ======
-    const advancedInsights = useMemo(() => {
-        if (orders.length === 0) return { aov: 0, avgItems: 0, returningClients: 0, returningPct: 0 };
-
-        // Average Order Value
-        const aov = stats.totalRevenue / orders.length;
-
-        // Average Items per order
-        const totalItemsSold = orders.reduce((acc, o) => {
-            return acc + (o.items || []).reduce((sum, item) => sum + (parseInt(item.quantity) || 1), 0);
-        }, 0);
-        const avgItems = totalItemsSold / orders.length;
-
-        // Returning Clients
-        const clientOrderCounts = {};
-        orders.forEach(o => {
-            if (o.client?.name) {
-                clientOrderCounts[o.client.name] = (clientOrderCounts[o.client.name] || 0) + 1;
-            }
-        });
-        const returningClients = Object.values(clientOrderCounts).filter(count => count > 1).length;
-        const totalUniqueClients = Object.keys(clientOrderCounts).length;
-        const returningPct = totalUniqueClients > 0 ? (returningClients / totalUniqueClients) * 100 : 0;
-
-        return { aov, avgItems, returningClients, returningPct, totalUniqueClients };
-    }, [orders, stats.totalRevenue]);
-
-    const isLoading = clientsLoading || productsLoading || ordersLoading;
+    const displayedProducts = (productTab === 'top' ? stats.rankedProducts : [...stats.rankedProducts].reverse()).slice(0, 4);
+    const loading = ordersLoading || clientsLoading || productsLoading;
+    const hasError = clientsError || productsError || ordersError;
+    const profitShare = stats.profit > 0 ? Math.min(100, stats.profit / (stats.profit + Math.max(0, stats.cost)) * 100) : 0;
 
     return (
-        <div className="dashboard-container fade-in">
-            {/* ===== HEADER ===== */}
-            <div className="dashboard-header">
-                <div>
-                    <h1 className="dashboard-title">
-                        <Zap size={32} className="title-icon" />
-                        Tableau de Bord
-                    </h1>
-                    <p className="dashboard-subtitle">
-                        {new Date().toLocaleDateString('fr-MA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
-                </div>
-                <div className="header-badges">
-                    <span className="live-badge">
-                        <span className="live-dot"></span>
-                        Live
-                    </span>
-                </div>
+        <div className="overview fade-in" aria-busy={loading}>
+            <div className="overview-heading">
+                <div><h1>Vue d’ensemble<span>.</span></h1><p>Ventes, clients et stock en temps réel.</p></div>
+                <div className="overview-actions"><AppSelect value={period} onChange={setPeriod} label="Période des statistiques" icon={CalendarIcon} options={[{ value: 'all', label: 'Toute la période' }, { value: 'month', label: 'Ce mois-ci' }, { value: 'year', label: 'Cette année' }]} /><Link to="/orders/new" className="btn btn-primary"><Plus size={16} />Nouvelle commande</Link></div>
             </div>
-
-            {/* ===== KPI CARDS ===== */}
-            <div className="kpi-grid">
-                {/* CA Total */}
-                <div className="kpi-card kpi-card--revenue">
-                    <div className="kpi-icon-wrap">
-                        <DollarSign size={22} />
-                    </div>
-                    <div className="kpi-content">
-                        <p className="kpi-label">Chiffre d'Affaires</p>
-                        <p className="kpi-value" title={ordersLoading ? '' : `${fmtFull(stats.totalRevenue)} MAD`}>
-                            {ordersLoading ? '...' : <><span className="kpi-short">{fmt(stats.totalRevenue)}</span><span className="kpi-currency"> MAD</span></>}
-                        </p>
-                        <p className="kpi-sub">Aujourd'hui: +{fmt(stats.todayRevenue)} MAD</p>
-                    </div>
-                    <ArrowUpRight size={16} className="kpi-arrow" />
-                </div>
-
-                {/* Profit Net */}
-                <div className="kpi-card kpi-card--profit">
-                    <div className="kpi-icon-wrap">
-                        <TrendingUp size={22} />
-                    </div>
-                    <div className="kpi-content">
-                        <p className="kpi-label">Profit Net</p>
-                        <p className="kpi-value" title={ordersLoading ? '' : `+${fmtFull(stats.totalProfit)} MAD`}>
-                            {ordersLoading ? '...' : <><span className="kpi-short">+{fmt(stats.totalProfit)}</span><span className="kpi-currency"> MAD</span></>}
-                        </p>
-                        <p className="kpi-sub">Marge: {stats.marginPct}%</p>
-                    </div>
-                    <ArrowUpRight size={16} className="kpi-arrow" />
-                </div>
-
-                {/* Coût Achats */}
-                <div className="kpi-card kpi-card--cost">
-                    <div className="kpi-icon-wrap">
-                        <ShoppingCart size={22} />
-                    </div>
-                    <div className="kpi-content">
-                        <p className="kpi-label">Coût Achats (Ras el Mal)</p>
-                        <p className="kpi-value" title={ordersLoading ? '' : `${fmtFull(stats.totalCost)} MAD`}>
-                            {ordersLoading ? '...' : <><span className="kpi-short">{fmt(stats.totalCost)}</span><span className="kpi-currency"> MAD</span></>}
-                        </p>
-                        <p className="kpi-sub">{orders.length} commandes total</p>
-                    </div>
-                    <ArrowUpRight size={16} className="kpi-arrow" />
-                </div>
-
-                {/* Commandes Today */}
-                <div className="kpi-card kpi-card--today">
-                    <div className="kpi-icon-wrap">
-                        <Activity size={22} />
-                    </div>
-                    <div className="kpi-content">
-                        <p className="kpi-label">Commandes Aujourd'hui</p>
-                        <p className="kpi-value">
-                            {ordersLoading ? '...' : stats.todaysOrders.length}
-                        </p>
-                        <p className="kpi-sub">Profit: +{fmt(stats.todayProfit)} MAD</p>
-                    </div>
-                    <ArrowUpRight size={16} className="kpi-arrow" />
-                </div>
-
-                {/* Clients */}
-                <div className="kpi-card kpi-card--clients">
-                    <div className="kpi-icon-wrap">
-                        <Users size={22} />
-                    </div>
-                    <div className="kpi-content">
-                        <p className="kpi-label">Total Clients</p>
-                        <p className="kpi-value">
-                            {clientsLoading ? '...' : clients.length}
-                        </p>
-                        <p className="kpi-sub">Base clientèle</p>
-                    </div>
-                    <ArrowUpRight size={16} className="kpi-arrow" />
-                </div>
-
-                {/* Ruptures */}
-                <div className={`kpi-card kpi-card--stock ${stats.outOfStock.length > 0 ? 'kpi-card--alert' : ''}`}>
-                    <div className="kpi-icon-wrap">
-                        <AlertTriangle size={22} />
-                    </div>
-                    <div className="kpi-content">
-                        <p className="kpi-label">Ruptures de Stock</p>
-                        <p className="kpi-value">
-                            {productsLoading ? '...' : stats.outOfStock.length}
-                        </p>
-                        <p className="kpi-sub">{stats.lowStock.length} en stock bas</p>
-                    </div>
-                    <ArrowUpRight size={16} className="kpi-arrow" />
-                </div>
+            {hasError && <div className="overview-error" role="alert"><AlertTriangle size={17} />Certaines données n’ont pas pu être chargées. Vérifiez votre connexion puis rechargez la page.</div>}
+            <div className="overview-kpis">
+                <Link to="/orders" className="overview-kpi overview-kpi--revenue"><div className="kpi-top"><span>Chiffre d’affaires</span><CircleDollarSign size={17} /></div><div className="overview-kpi-value">{ordersLoading ? '…' : <Money value={stats.revenue} />}</div><div className="kpi-bottom"><span className="kpi-caption"><span className="tiny-dot" />Ventes sur la période</span><ArrowUpRight size={15} /></div></Link>
+                <Link to="/orders" className={`overview-kpi overview-kpi--accent overview-kpi--profit ${stats.profit < 0 ? 'overview-kpi--loss' : ''}`}><div className="kpi-top"><span>Profit net</span><TrendingUp size={17} /></div><div className="overview-kpi-value">{ordersLoading ? '…' : <Money value={stats.profit} />}</div><div className="kpi-bottom"><span className="kpi-pill">{stats.margin.toFixed(1)} %</span><span>de marge nette</span><ArrowUpRight size={15} /></div></Link>
+                <Link to="/orders" className="overview-kpi overview-kpi--orders"><div className="kpi-top"><span>Commandes</span><ShoppingBag size={17} /></div><div className="overview-kpi-value">{ordersLoading ? '…' : periodOrders.length.toLocaleString('fr-MA')}<small> commandes</small></div><div className="kpi-bottom"><span className="kpi-pill kpi-pill--subtle">{stats.todayOrders.length} aujourd’hui</span><ArrowUpRight size={15} /></div></Link>
+                <Link to="/clients" className="overview-kpi overview-kpi--clients"><div className="kpi-top"><span>Clients</span><Users size={17} /></div><div className="overview-kpi-value">{clientsLoading ? '…' : clients.length.toLocaleString('fr-MA')}<small> au total</small></div><div className="kpi-bottom"><span className="kpi-caption"><span className="tiny-dot tiny-dot--mint" />{stats.rankedClients.length} acheteurs</span><ArrowUpRight size={15} /></div></Link>
             </div>
-
-            {/* ===== MAIN GRID (charts + tables) ===== */}
-            <div className="dashboard-main-grid">
-
-                {/* ===== GRAPHIQUE REVENUS 7 MOIS ===== */}
-                <div className="dash-card dash-card--chart">
-                    <div className="dash-card-header">
-                        <div className="dash-card-title">
-                            <BarChart3 size={20} />
-                            Revenus & Profits — 7 Derniers Mois
-                        </div>
+            <div className="overview-body">
+                <div className="overview-primary">
+                    <div className="overview-charts">
+                        <section className="overview-panel sales-panel">
+                            <div className="overview-panel-heading"><div><h2>Revenus & Profits</h2><p>Évolution du chiffre d’affaires et du profit</p></div><AppSelect value={monthCount} onChange={setMonthCount} label="Nombre de mois du graphique" compact options={[{ value: 7, label: '7 mois' }, { value: 12, label: '12 mois' }]} /></div>
+                            <div className="chart-summary"><strong><Money value={stats.revenue} /></strong><span><i className="legend-dot" />Chiffre d’affaires</span><span><i className="legend-dot legend-dot--mint" />Profit net</span></div>
+                            <RevenueChart months={months} loading={ordersLoading} />
+                        </section>
+                        <section className="overview-panel finance-panel"><div className="overview-panel-heading"><div><h2>Répartition financière</h2><p>Chaque dirham, en perspective</p></div><ArrowUpRight size={15} /></div>
+                            <div className="finance-donut" style={{ '--profit-share': `${profitShare}%` }} role="img" aria-label={`Marge nette : ${stats.margin.toFixed(1)} pour cent`}><div><span>Marge nette</span><strong>{stats.margin.toFixed(1)}<small>%</small></strong><span>sur la période</span></div></div>
+                            <div className="finance-legend"><div><span><i className="legend-dot" />Profit net</span><strong><Money value={stats.profit} /></strong></div><div><span><i className="legend-dot legend-dot--olive" />Coût des achats</span><strong><Money value={stats.cost} /></strong></div></div>
+                        </section>
                     </div>
-                    <div className="chart-area">
-                        {last7Months.map((period, i) => (
-                            <div key={i} className="chart-col">
-                                <div className="chart-bars">
-                                    {/* Revenue bar */}
-                                    <div
-                                        className="bar bar--revenue"
-                                        style={{ height: `${(period.revenue / maxRevenue) * 100}%` }}
-                                        title={`CA: ${fmtFull(period.revenue)} MAD`}
-                                    >
-                                        {period.revenue > 0 && (
-                                            <span className="bar-tooltip">{fmt(period.revenue)}</span>
-                                        )}
-                                    </div>
-                                    {/* Profit bar */}
-                                    <div
-                                        className="bar bar--profit"
-                                        style={{ height: `${(period.profit / maxRevenue) * 100}%` }}
-                                        title={`Profit: ${fmtFull(period.profit)} MAD`}
-                                    >
-                                    </div>
-                                </div>
-                                <div className="chart-label">
-                                    <span style={{ textTransform: 'capitalize' }}>{period.label}</span>
-                                    {period.count > 0 && <span className="chart-count">{period.count}</span>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="chart-legend">
-                        <span className="legend-item legend-item--revenue">■ Chiffre d'Affaires</span>
-                        <span className="legend-item legend-item--profit">■ Profit Net</span>
+                    <section className="overview-panel best-clients"><div className="overview-panel-heading"><div><h2>Vos meilleurs clients <span className="panel-count">{stats.rankedClients.length}</span></h2><p>Ceux qui font grandir votre activité</p></div><Link to="/clients" className="panel-link">Tous les clients <ArrowUpRight size={14} /></Link></div>
+                        {stats.rankedClients.length === 0 ? <EmptyPanel icon={Users}>Vos clients les plus actifs apparaîtront ici.</EmptyPanel> : <div className="overview-table-scroll"><table className="overview-table"><thead><tr><th>Client</th><th>Commandes</th><th>Chiffre d’affaires</th><th>Profit net</th><th>Marge</th></tr></thead><tbody>{stats.rankedClients.slice(0, 5).map((client, index) => <tr key={client.name}><td><div className="overview-client"><span className={`initial-avatar avatar-tone-${index % 3}`}><UserRound size={18} strokeWidth={2} aria-hidden="true" /></span><span>{client.name}<small>{client.orders > 1 ? `${client.orders} commandes` : '1 commande'}</small></span></div></td><td><span className="order-count">{client.orders}</span></td><td><Money value={client.revenue} /></td><td className={client.profit < 0 ? 'negative-value' : 'positive-value'}><Money value={client.profit} /></td><td><span className={`margin-label ${client.profit < 0 ? 'margin-label--negative' : ''}`}>{client.revenue ? (client.profit / client.revenue * 100).toFixed(1) : '0.0'} %</span></td></tr>)}</tbody></table></div>}
+                    </section>
+                    <div className="overview-lower">
+                        <section className="overview-panel products-panel"><div className="overview-panel-heading"><div><h2>Vos produits en chiffres</h2><p>Les tendances de votre catalogue</p></div><Link to="/products" className="icon-button" aria-label="Voir les produits"><ArrowUpRight size={16} /></Link></div><div className="product-tabs" role="tablist" aria-label="Classement des ventes"><button id="top-products-tab" role="tab" aria-selected={productTab === 'top'} aria-controls="ranked-products" onClick={() => setProductTab('top')} className={productTab === 'top' ? 'selected' : ''}>Les plus vendus</button><button id="bottom-products-tab" role="tab" aria-selected={productTab === 'bottom'} aria-controls="ranked-products" onClick={() => setProductTab('bottom')} className={productTab === 'bottom' ? 'selected' : ''}>Les moins vendus</button></div><div id="ranked-products" role="tabpanel" aria-labelledby={productTab === 'top' ? 'top-products-tab' : 'bottom-products-tab'}>{!displayedProducts.length ? <EmptyPanel>Aucune vente sur cette période.</EmptyPanel> : <div className="ranked-products">{displayedProducts.map((product, index) => <div className="ranked-product" key={product.name}><span className="product-rank">0{index + 1}</span><span className="ranked-product-icon"><Package size={17} /></span><div><strong>{product.name}</strong><span>{product.quantity} unités vendues</span></div><div className="ranked-product-amount"><strong><Money value={product.revenue} /></strong><span>Profit : {fmt(product.profit)} MAD</span></div></div>)}</div>}</div></section>
                     </div>
                 </div>
-
-                {/* ===== TOP PRODUITS ===== */}
-                <div className="dash-card dash-card--top">
-                    <div className="dash-card-header">
-                        <div className="dash-card-title">
-                            <Package size={20} />
-                            Top Produits Vendus
-                        </div>
-                    </div>
-                    {topProducts.length === 0 ? (
-                        <div className="dash-empty">
-                            <Package size={40} />
-                            <p>Aucune vente enregistrée</p>
-                        </div>
-                    ) : (
-                        <div className="top-list">
-                            {topProducts.map((p, i) => (
-                                <div key={i} className="top-item">
-                                    <div className="top-rank">#{i + 1}</div>
-                                    <div className="top-info">
-                                        <p className="top-name">{p.name}</p>
-                                        <p className="top-sub">{p.qty} unités vendues</p>
-                                    </div>
-                                    <div className="top-stats">
-                                        <span className="top-revenue">{p.revenue.toFixed(0)} MAD</span>
-                                        {p.profit > 0 && (
-                                            <span className="top-profit">+{p.profit.toFixed(0)}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* ===== BOTTOM 5 PRODUITS ===== */}
-                <div className="dash-card dash-card--bottom">
-                    <div className="dash-card-header">
-                        <div className="dash-card-title">
-                            <TrendingDown size={20} />
-                            Top 5 Moins Vendus
-                        </div>
-                    </div>
-                    {bottomProducts.length === 0 ? (
-                        <div className="dash-empty">
-                            <Package size={40} />
-                            <p>Aucune vente enregistrée</p>
-                        </div>
-                    ) : (
-                        <div className="top-list">
-                            {bottomProducts.map((p, i) => (
-                                <div key={i} className="top-item top-item--bottom">
-                                    <div className="top-rank top-rank--bottom">#{i + 1}</div>
-                                    <div className="top-info">
-                                        <p className="top-name">{p.name}</p>
-                                        <p className="top-sub">{p.qty} unités vendues</p>
-                                    </div>
-                                    <div className="top-stats">
-                                        <span className="top-revenue">{p.revenue.toFixed(0)} MAD</span>
-                                        {p.profit > 0 && (
-                                            <span className="top-profit">+{p.profit.toFixed(0)}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* ===== TOP CLIENTS ===== */}
-                <div className="dash-card dash-card--clients-top">
-                    <div className="dash-card-header">
-                        <div className="dash-card-title">
-                            <Users size={20} />
-                            Top Clients
-                        </div>
-                        {topClients.length > 0 && (
-                            <span className="badge badge-info">{topClients.length} clients</span>
-                        )}
-                    </div>
-
-                    {topClients.length === 0 ? (
-                        <div className="dash-empty">
-                            <Users size={40} />
-                            <p>Aucune commande pour l'instant</p>
-                        </div>
-                    ) : (
-                        <div className="clients-top-table">
-                            <div className="clients-top-head">
-                                <span>#</span>
-                                <span>Client</span>
-                                <span>Cmds</span>
-                                <span>Total Dépensé</span>
-                                <span>Profit Généré</span>
-                            </div>
-                            {topClients.map((c, i) => {
-                                const profitPct = c.totalSpent > 0 ? ((c.profit / c.totalSpent) * 100).toFixed(1) : '0.0';
-                                const getRankIcon = (index) => {
-                                    if (index === 0) return <Award size={18} style={{ color: '#fbbf24' }} />; // Gold
-                                    if (index === 1) return <Award size={18} style={{ color: '#9ca3af' }} />; // Silver
-                                    if (index === 2) return <Award size={18} style={{ color: '#b45309' }} />; // Bronze
-                                    return `#${index + 1}`;
-                                };
-                                return (
-                                    <div key={i} className={`clients-top-row ${i < 3 ? 'clients-top-row--medal' : ''}`}>
-                                        <span className="client-rank">{getRankIcon(i)}</span>
-                                        <span className="client-top-name">
-                                            <span className="client-top-avatar"><Users size={13} /></span>
-                                            {c.name}
-                                        </span>
-                                        <span className="client-orders-count">{c.orders}</span>
-                                        <span className="client-spent" title={fmtFull(c.totalSpent) + ' MAD'}>
-                                            {fmt(c.totalSpent)} MAD
-                                        </span>
-                                        <span className={`client-profit-cell ${c.profit > 0 ? 'profit--pos' : 'profit--zero'}`}>
-                                            {c.profit > 0 ? `+${fmt(c.profit)}` : '—'}
-                                            {c.profit > 0 && <span className="profit-pct"> ({profitPct}%)</span>}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* ===== STOCK OVERVIEW ===== */}
-                <div className="dash-card dash-card--stock-overview">
-                    <div className="dash-card-header">
-                        <div className="dash-card-title">
-                            <Warehouse size={20} />
-                            Vue Globale Stock
-                        </div>
-                    </div>
-                    <div className="stock-overview-grid">
-                        <div className="stock-stat">
-                            <p className="stock-stat-value">{products.length}</p>
-                            <p className="stock-stat-label">Produits Total</p>
-                        </div>
-                        <div className="stock-stat stock-stat--green">
-                            <p className="stock-stat-value">{products.filter(p => (p.stock_quantity || 0) > (p.reorder_level || 5)).length}</p>
-                            <p className="stock-stat-label">En Bon Stock</p>
-                        </div>
-                        <div className="stock-stat stock-stat--yellow">
-                            <p className="stock-stat-value">{stats.lowStock.length}</p>
-                            <p className="stock-stat-label">Stock Bas</p>
-                        </div>
-                        <div className="stock-stat stock-stat--red">
-                            <p className="stock-stat-value">{stats.outOfStock.length}</p>
-                            <p className="stock-stat-label">Ruptures</p>
-                        </div>
-                        <div className="stock-stat stock-stat--blue stock-stat--full">
-                            <p className="stock-stat-value" title={fmtFull(stats.stockValue) + ' MAD'}>{fmt(stats.stockValue)} MAD</p>
-                            <p className="stock-stat-label">Valeur Totale Stock Investi</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ===== REPARTITION FINANCIERE ===== */}
-                <div className="dash-card dash-card--donut">
-                    <div className="dash-card-header">
-                        <div className="dash-card-title">
-                            <PieChart size={20} />
-                            Répartition Financière
-                        </div>
-                    </div>
-                    {stats.totalRevenue > 0 ? (
-                        <div className="donut-container">
-                            <div className="donut-chart" style={{
-                                background: `conic-gradient(var(--success) 0% ${(stats.totalProfit / stats.totalRevenue) * 100}%, var(--warning) ${(stats.totalProfit / stats.totalRevenue) * 100}% 100%)`
-                            }}>
-                                <div className="donut-inner">
-                                    <span className="donut-total-val" title={fmtFull(stats.totalRevenue) + ' MAD'}>{fmt(stats.totalRevenue)}</span>
-                                    <span className="donut-total-lbl">MAD</span>
-                                </div>
-                            </div>
-                            <div className="donut-legend">
-                                <div className="donut-legend-item">
-                                    <span className="donut-dot donut-dot--profit"></span>
-                                    <div className="donut-text">
-                                        <p className="donut-lbl">Profit Net ({stats.marginPct}%)</p>
-                                        <p className="donut-val text-success">+{fmt(stats.totalProfit)} MAD</p>
-                                    </div>
-                                </div>
-                                <div className="donut-legend-item">
-                                    <span className="donut-dot donut-dot--cost"></span>
-                                    <div className="donut-text">
-                                        <p className="donut-lbl">Coûts (Ras el Mal) ({(100 - parseFloat(stats.marginPct)).toFixed(1)}%)</p>
-                                        <p className="donut-val text-warning">{fmt(stats.totalCost)} MAD</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="dash-empty">
-                            <PieChart size={40} />
-                            <p>Aucune donnée financière</p>
-                        </div>
-                    )}
-                </div>
-
+                <aside className="overview-rail">
+                    <section className="overview-panel stock-panel"><div className="overview-panel-heading"><h2>État du stock</h2><Link to="/products" className="icon-button" aria-label="Gérer le stock"><ArrowUpRight size={16} /></Link></div><div className="stock-total"><span className="stock-icon"><Package size={21} /></span><strong>{productsLoading ? '…' : products.length}<small> références au catalogue</small></strong></div><div className="stock-segments" aria-hidden="true">{products.length ? <><span style={{ flex: products.length - stats.outOfStock.length - stats.lowStock.length }} /><span style={{ flex: stats.lowStock.length }} /><span style={{ flex: stats.outOfStock.length }} /></> : <span className="stock-segment-empty" />}</div><div className="stock-counts"><div><span className="tiny-dot" />Disponible<strong>{products.length - stats.outOfStock.length - stats.lowStock.length}</strong></div><div><span className="tiny-dot tiny-dot--amber" />Stock bas<strong>{stats.lowStock.length}</strong></div><div><span className="tiny-dot tiny-dot--red" />En rupture<strong>{stats.outOfStock.length}</strong></div></div><div className="stock-investment"><span>Valeur du stock investi</span><strong><Money value={stats.stockValue} /></strong></div></section>
+                    <section className="quick-actions"><h2>Accès rapide</h2><Link to="/orders/new"><Plus size={16} />Nouvelle commande<ArrowRight size={15} /></Link><Link to="/orders"><ReceiptText size={16} />Voir les commandes<ArrowRight size={15} /></Link><Link to="/products"><Package size={16} />Gérer le stock<ArrowRight size={15} /></Link></section>
+                </aside>
             </div>
         </div>
     );
+}
+
+function CalendarIcon() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4M17 3v4M3 11h18" /></svg>;
 }

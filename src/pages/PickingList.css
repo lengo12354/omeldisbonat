@@ -35,7 +35,7 @@
     gap: var(--space-md);
     font-size: 2rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    background: linear-gradient(135deg, #fff 0%, #b7c5ac 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: var(--space-xs);
@@ -69,12 +69,12 @@
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
     border: none;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(134, 191, 255, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 16px rgba(134, 191, 255, 0.4);
 }
 
 .btn-outline {
@@ -91,7 +91,7 @@
 
 /* Filters & Stats Card (Glassmorphism) */
 .filters-card {
-    background: rgba(30, 41, 59, 0.7);
+    background: rgba(30, 40, 29, 0.7);
     /* translucent dark bg */
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
@@ -122,8 +122,16 @@
     letter-spacing: 0.05em;
 }
 
+.picking-date-range { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.picking-date-range > span { color: #91a7bd; font-size: 12px; }
+.picking-list-page .filters-card { background: #1b2027; border-color: #405166; }
+.picking-list-page .filter-group label { color: #a9c6e2; }
+.picking-list-page .picking-table-container { background: #1a1f26; border-color: #384b60; }
+.picking-list-page .picking-table th { background: #222f3e; }
+.picking-list-page .picking-table tfoot { background: #202a36; }
+
 .input {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(30, 40, 29, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.75rem 1rem;
     border-radius: var(--radius-md);
@@ -178,7 +186,7 @@
 
 /* Table Styling */
 .picking-table-container {
-    background: rgba(30, 41, 59, 0.4);
+    background: rgba(30, 40, 29, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -192,7 +200,7 @@
 }
 
 .picking-table th {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(30, 40, 29, 0.8);
     padding: 1.25rem 1.5rem;
     text-align: left;
     font-weight: 600;
@@ -226,13 +234,13 @@
     font-weight: 700;
     color: var(--primary-light) !important;
     text-align: center;
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(134, 191, 255, 0.05);
     /* Subtle highlight for quantity column */
     border-radius: var(--radius-sm);
 }
 
 .picking-table tfoot {
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(30, 40, 29, 0.9);
 }
 
 .picking-table tfoot td {
@@ -246,7 +254,7 @@
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;
-    background: rgba(30, 41, 59, 0.3);
+    background: rgba(30, 40, 29, 0.3);
     border-radius: var(--radius-lg);
     border: 2px dashed rgba(255, 255, 255, 0.1);
 }

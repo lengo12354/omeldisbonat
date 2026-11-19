@@ -1,0 +1,130 @@
+:root[data-theme='light'] {
+  color-scheme: light;
+  --primary: #2878c8;
+  --primary-dark: #1665ae;
+  --primary-light: #326da7;
+  --secondary: #377bbd;
+  --accent: #377bbd;
+  --success: #187c50;
+  --warning: #9e641b;
+  --danger: #c33749;
+  --info: #2878c8;
+  --bg-primary: #f3f6fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e9eff6;
+  --surface: #ffffff;
+  --border: #d7e0e9;
+  --text-primary: #172a3d;
+  --text-secondary: #43566b;
+  --text-muted: #607388;
+  background: var(--bg-primary);
+}
+:root[data-theme='light'] body,
+:root[data-theme='light'] .layout { background: var(--bg-primary); color: var(--text-primary); }
+:root[data-theme='light'] .sidebar,
+:root[data-theme='light'] .topbar { background: #fff; border-color: var(--border); }
+:root[data-theme='light'] .nav-section-label,
+:root[data-theme='light'] .workspace-footer { color: #65798d; }
+:root[data-theme='light'] .nav-link { color: #435970; }
+:root[data-theme='light'] .nav-link:hover { background: #eaf2fb; color: #1b5e9f; }
+:root[data-theme='light'] .nav-link.active { background: #dcecff; color: #145d9f; }
+:root[data-theme='light'] .nav-active-dot { background: #2878c8; }
+:root[data-theme='light'] .brand-logo,
+:root[data-theme='light'] .login-logo { filter: brightness(0) saturate(100%) invert(37%) sepia(69%) saturate(1000%) hue-rotate(176deg) brightness(91%) contrast(91%); }
+:root[data-theme='light'] .btn-primary,
+:root[data-theme='light'] .layout .btn-primary { color: #fff; background: #2878c8; border-color: #2878c8; }
+:root[data-theme='light'] .btn-primary:hover,
+:root[data-theme='light'] .layout .btn-primary:hover { background: #1b65ad; border-color: #1b65ad; }
+:root[data-theme='light'] .btn-outline,
+:root[data-theme='light'] .layout .btn-outline { background: #fff; color: #324d67; border-color: #c5d3e0; }
+:root[data-theme='light'] .btn-outline:hover,
+:root[data-theme='light'] .layout .btn-outline:hover { background: #eaf2fb; color: #174f83; }
+:root[data-theme='light'] .input,
+:root[data-theme='light'] select.input,
+:root[data-theme='light'] textarea.input,
+:root[data-theme='light'] .login-field { background: #fff; border-color: #c8d5e1; color: #172a3d; }
+:root[data-theme='light'] .input::placeholder,
+:root[data-theme='light'] input::placeholder { color: #7b8da0; }
+:root[data-theme='light'] .login-screen { background: radial-gradient(circle at 85% 12%, #d7eafe 0, transparent 36%), #f3f6fa; }
+:root[data-theme='light'] .login-card,
+:root[data-theme='light'] .settings-card { background: #fff; border-color: #d1dce7; box-shadow: 0 12px 32px #1734520c; }
+:root[data-theme='light'] .theme-option { background: #f7f9fc; border-color: #cfdae5; color: #435970; }
+:root[data-theme='light'] .theme-option.selected { background: #e8f3ff; border-color: #2878c8; color: #1c5f9f; }
+:root[data-theme='light'] .settings-icon { background: #e7f2ff; border-color: #c6def8; }
+:root[data-theme='light'] .settings-alert { background: #fff0f1; color: #a62738; }
+:root[data-theme='light'] .settings-signout { color: #bd3445; border-color: #e4a6ad; }
+:root[data-theme='light'] .settings-signout:hover { background: #fff0f1; color: #a62738; }
+
+/* Shared work surfaces */
+:root[data-theme='light'] .layout .clients-table-container,
+:root[data-theme='light'] .layout .orders-table-container,
+:root[data-theme='light'] .layout .selection-panel,
+:root[data-theme='light'] .layout .cart-panel,
+:root[data-theme='light'] .layout .filters-card,
+:root[data-theme='light'] .layout .modal-content,
+:root[data-theme='light'] .layout .stat-item,
+:root[data-theme='light'] .layout .empty-state,
+:root[data-theme='light'] .layout .no-results-card,
+:root[data-theme='light'] .overview-panel,
+:root[data-theme='light'] .overview-kpi,
+:root[data-theme='light'] .clients-empty,
+:root[data-theme='light'] .clients-no-result { background: #fff; border-color: #d5dfe9; color: #172a3d; box-shadow: none; }
+:root[data-theme='light'] .layout .clients-table thead,
+:root[data-theme='light'] .layout .orders-table thead,
+:root[data-theme='light'] .overview-table th { background: #f0f5fa; border-color: #d5dfe9; }
+:root[data-theme='light'] .layout .clients-table tbody tr,
+:root[data-theme='light'] .layout .orders-table tbody tr,
+:root[data-theme='light'] .overview-table td { border-color: #e1e8ef; }
+:root[data-theme='light'] .layout .clients-table tbody tr:hover,
+:root[data-theme='light'] .layout .orders-table tbody tr:hover,
+:root[data-theme='light'] .overview-table tbody tr:hover { background: #f1f7fd; }
+:root[data-theme='light'] .layout .clients-table th,
+:root[data-theme='light'] .layout .orders-table th,
+:root[data-theme='light'] .overview-table th { color: #4f6880; }
+:root[data-theme='light'] .layout .clients-table td,
+:root[data-theme='light'] .layout .orders-table td,
+:root[data-theme='light'] .overview-table td { color: #23394e; }
+:root[data-theme='light'] .layout .page-subtitle,
+:root[data-theme='light'] .clients-heading p,
+:root[data-theme='light'] .overview-panel-heading p,
+:root[data-theme='light'] .kpi-top,
+:root[data-theme='light'] .kpi-bottom,
+:root[data-theme='light'] .finance-donut span,
+:root[data-theme='light'] .finance-legend > div > span { color: #607388; }
+:root[data-theme='light'] .overview-kpi--revenue { border-color: #8fb9e4; background: #f3f8ff; }
+:root[data-theme='light'] .overview-kpi--revenue .overview-kpi-value { color: #1c67ad; }
+:root[data-theme='light'] .overview-kpi--orders { border-color: #b9a7da; background: #f8f5ff; }
+:root[data-theme='light'] .overview-kpi--orders .overview-kpi-value { color: #6b4ca4; }
+:root[data-theme='light'] .overview-kpi--clients { border-color: #e2ba8f; background: #fff8ef; }
+:root[data-theme='light'] .overview-kpi--clients .overview-kpi-value { color: #a36220; }
+:root[data-theme='light'] .overview-kpi--profit { background: linear-gradient(112deg, #e9f8ef, #d7f0df 76%, #c6e9d1); border-color: #74bb91; }
+:root[data-theme='light'] .overview-kpi--profit .overview-kpi-value,
+:root[data-theme='light'] .overview-kpi--profit .kpi-top > svg { color: #137a48; }
+:root[data-theme='light'] .overview-kpi--profit .kpi-pill { color: #176f44; background: #b9e5c8; }
+:root[data-theme='light'] .overview-kpi--profit:hover { background: linear-gradient(112deg, #ddf4e5, #c9e9d3 76%, #b6dfc3); }
+:root[data-theme='light'] .overview-kpi--loss { background: linear-gradient(112deg, #fff0f1, #f9dfe3 76%, #f2cdd3); border-color: #df8993; }
+:root[data-theme='light'] .overview-kpi--loss .overview-kpi-value,
+:root[data-theme='light'] .overview-kpi--loss .kpi-top > svg { color: #bb3346; }
+:root[data-theme='light'] .finance-donut > div { background: #fff; }
+:root[data-theme='light'] .overview-select,
+:root[data-theme='light'] .chart-range { background: #fff; color: #38546e; border-color: #cad8e5; }
+:root[data-theme='light'] .overview-select select option,
+:root[data-theme='light'] .chart-range select option { background: #fff; color: #172a3d; }
+:root[data-theme='light'] .layout .new-order-page .panel-body,
+:root[data-theme='light'] .layout .new-order-page .cart-body { background: #fff; }
+:root[data-theme='light'] .layout .new-order-page .panel-header,
+:root[data-theme='light'] .layout .new-order-page .cart-header,
+:root[data-theme='light'] .layout .new-order-page .cart-footer { background: #f0f5fa; border-color: #d5dfe9; }
+:root[data-theme='light'] .layout .new-order-page .client-item,
+:root[data-theme='light'] .layout .new-order-page .product-item,
+:root[data-theme='light'] .layout .new-order-page .cart-item { background: #f6f9fc; border-color: #d8e2ec; }
+:root[data-theme='light'] .layout .new-order-page .client-name,
+:root[data-theme='light'] .layout .new-order-page .product-name { color: #172a3d; }
+:root[data-theme='light'] .layout .new-order-page .search-input { background: #fff !important; color: #172a3d; border-color: #c9d7e4 !important; }
+:root[data-theme='light'] .layout .new-order-page .search-input:focus { background: #fff !important; }
+:root[data-theme='light'] .layout .product-card--ok { --stock-bg: #f2faf5; --stock-panel: #e2f2e8; --stock-border: #a2d3b5; --stock-color: #187c50; }
+:root[data-theme='light'] .layout .product-card--low { --stock-bg: #fff9ee; --stock-panel: #faebce; --stock-border: #e1c28b; --stock-color: #9e641b; }
+:root[data-theme='light'] .layout .product-card--out { --stock-bg: #fff2f3; --stock-panel: #f8dfe3; --stock-border: #e3a3ab; --stock-color: #ba3749; }
+:root[data-theme='light'] .layout .product-card { box-shadow: none; }
+:root[data-theme='light'] .layout .collection-card { background: #fff; border-color: #d5dfe9; }
+@media print { :root[data-theme='light'] .layout { background: #fff; } }

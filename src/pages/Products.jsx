@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Search, Trash2, Package, Tag, DollarSign, Grid, Pencil, Edit2, AlertTriangle, Warehouse, TrendingDown } from 'lucide-react';
 import Modal from '../components/Modal';
+import AppSelect from '../components/AppSelect';
 import ImportButton from '../components/ImportButton';
 import ExportButton from '../components/ExportButton';
 import { useProducts } from '../hooks/useProducts';
@@ -174,10 +175,7 @@ export default function Products() {
         });
     }, [products, search, filterStock]);
 
-    // Reset pagination when search or filter changes
-    useEffect(() => {
-        setVisibleCount(50);
-    }, [search, filterStock]);
+    const changeFilter = value => { setFilterStock(value); setVisibleCount(50); };
 
     return (
         <div className="products-page fade-in">
@@ -199,7 +197,7 @@ export default function Products() {
                             placeholder="Chercher produit..."
                             className="input search-input"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => { setSearch(e.target.value); setVisibleCount(50); }}
                         />
                     </div>
                     <ImportButton type="product" onImport={handleImport} />
@@ -227,12 +225,12 @@ export default function Products() {
                     <span className="stat-label">Collections</span>
                     <span className="stat-value">{categories.length}</span>
                 </div>
-                <div className="stat-item stat-item--warning" onClick={() => setFilterStock(filterStock === 'low' ? 'all' : 'low')} style={{ cursor: 'pointer' }}>
+                <div className="stat-item stat-item--warning" onClick={() => changeFilter(filterStock === 'low' ? 'all' : 'low')} style={{ cursor: 'pointer' }}>
                     <AlertTriangle size={20} />
                     <span className="stat-label">Stock Bas</span>
                     <span className="stat-value">{lowStock.length}</span>
                 </div>
-                <div className="stat-item stat-item--danger" onClick={() => setFilterStock(filterStock === 'out' ? 'all' : 'out')} style={{ cursor: 'pointer' }}>
+                <div className="stat-item stat-item--danger" onClick={() => changeFilter(filterStock === 'out' ? 'all' : 'out')} style={{ cursor: 'pointer' }}>
                     <TrendingDown size={20} />
                     <span className="stat-label">Rupture</span>
                     <span className="stat-value">{outOfStock.length}</span>
@@ -243,7 +241,7 @@ export default function Products() {
                     <span className="stat-value" title={fmtFull(totalStockValue) + ' MAD'}>{fmt(totalStockValue)} MAD</span>
                 </div>
                 {filterStock !== 'all' && (
-                    <button className="btn btn-outline btn-sm" onClick={() => setFilterStock('all')}>
+                    <button className="btn btn-outline btn-sm" onClick={() => changeFilter('all')}>
                         Tout afficher
                     </button>
                 )}
@@ -266,7 +264,7 @@ export default function Products() {
                 </div>
             ) : (
                 <div className="products-grid">
-                    {filteredProducts.slice(0, visibleCount).map((product, index) => {
+                    {filteredProducts.slice(0, visibleCount).map((product) => {
                         const stockStatus = getStockStatus(product);
                         const qty = product.stock_quantity || 0;
                         return (
@@ -360,16 +358,7 @@ export default function Products() {
 
                     <div className="form-group">
                         <label>Collection</label>
-                        <select
-                            className="input"
-                            value={formData.category}
-                            onChange={e => setFormData({ ...formData, category: e.target.value })}
-                        >
-                            <option value="">Choisir une collection...</option>
-                            {collections.map(collection => (
-                                <option key={collection.id} value={collection.name}>{collection.name}</option>
-                            ))}
-                        </select>
+                        <AppSelect className="product-collection-select" value={formData.category} onChange={category => setFormData(previous => ({ ...previous, category }))} label="Collection" options={[{ value: '', label: 'Choisir une collection...' }, ...collections.map(collection => ({ value: collection.name, label: collection.name }))]} />
                     </div>
 
                     {/* Section Stock */}
