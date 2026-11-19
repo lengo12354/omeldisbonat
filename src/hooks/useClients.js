@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -14,7 +14,7 @@ export function useClients() {
     const useSupabase = isSupabaseConfigured();
 
     // Fetch from Supabase
-    const fetchClients = async () => {
+    const fetchClients = useCallback(async () => {
         if (!useSupabase) return;
 
         setLoading(true);
@@ -32,13 +32,13 @@ export function useClients() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [useSupabase]);
 
     useEffect(() => {
         if (useSupabase) {
             fetchClients();
         }
-    }, [useSupabase]);
+    }, [fetchClients, useSupabase]);
 
     // Get clients (Supabase or localStorage)
     const clients = useSupabase ? supabaseClients : localClients;

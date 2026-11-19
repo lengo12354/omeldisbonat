@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Printer } from 'lucide-react';
 import { useOrders } from '../hooks/useOrders';
 import './PrintOrder.css';
@@ -7,24 +7,13 @@ import './PrintOrder.css';
 export default function PrintOrder() {
     const { orderId } = useParams();
     const { orders, loading } = useOrders();
-    const [order, setOrder] = useState(null);
+    const order = orders.find(o => o.id === orderId);
 
     useEffect(() => {
-        if (!loading && orders.length > 0) {
-            const foundOrder = orders.find(o => o.id === orderId);
-            setOrder(foundOrder);
-            
-            // Auto-print when order is loaded successfully
-            if (foundOrder) {
-                setTimeout(() => {
-                    window.print();
-                }, 500);
-            }
-        } else if (!loading && orders.length === 0 && orderId) {
-            // If orders are loaded but empty, maybe we should try to fetch just this order?
-            // For now, the hook fetches all.
-        }
-    }, [orderId, orders, loading]);
+        if (loading || !order) return;
+        const timer = setTimeout(() => window.print(), 500);
+        return () => clearTimeout(timer);
+    }, [order, loading]);
 
     const handlePrint = () => {
         window.print();

@@ -93,7 +93,6 @@ export default function NewOrder() {
 
         setIsSubmitting(true);
         const newOrder = {
-            id: Date.now().toString(),
             client: selectedClient,
             items: cart,
             totalAmount: cartTotal,

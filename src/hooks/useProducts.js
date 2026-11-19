@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -15,7 +15,7 @@ export function useProducts() {
     const useSupabase = isSupabaseConfigured();
 
     // Fetch from Supabase
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         if (!useSupabase) return;
 
         setLoading(true);
@@ -33,13 +33,13 @@ export function useProducts() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [useSupabase]);
 
     useEffect(() => {
         if (useSupabase) {
             fetchProducts();
         }
-    }, [useSupabase]);
+    }, [fetchProducts, useSupabase]);
 
     const products = useSupabase ? supabaseProducts : localProducts;
 

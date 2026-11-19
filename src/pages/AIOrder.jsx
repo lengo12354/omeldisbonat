@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClients } from '../hooks/useClients';
 import { useProducts } from '../hooks/useProducts';
@@ -415,6 +415,7 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
             {/* ── STEP: CONFIRM ITEMS ── */}
             {step === STEP.CONFIRM_ITEMS && (
                 <ItemConfirmStep
+                    key={currentItemIndex}
                     aiItem={aiItems[currentItemIndex]}
                     itemIndex={currentItemIndex}
                     totalItems={aiItems.length}
@@ -544,27 +545,12 @@ function ClientConfirmStep({ aiName, candidates, allClients, onConfirm }) {
 ═══════════════════════════════════════════ */
 function ItemConfirmStep({ aiItem, itemIndex, totalItems, products, onConfirm, onSkip }) {
     const candidates = matchProduct(aiItem?.name || '', products);
+    const initialProduct = candidates[0] || null;
     const [showAll, setShowAll] = useState(false);
     const [search, setSearch] = useState('');
-    const [selectedProduct, setSelectedProduct] = useState(candidates[0] || null);
+    const [selectedProduct, setSelectedProduct] = useState(initialProduct);
     const [quantity, setQuantity] = useState(aiItem?.quantity || 1);
-    const [price, setPrice] = useState('');
-
-    // Reset when item changes
-    useEffect(() => {
-        const cands = matchProduct(aiItem?.name || '', products);
-        setSelectedProduct(cands[0] || null);
-        setQuantity(aiItem?.quantity || 1);
-        setPrice(aiItem?.unit_price ? String(aiItem.unit_price) : (cands[0]?.price ? String(cands[0].price) : ''));
-        setShowAll(false);
-        setSearch('');
-    }, [aiItem, itemIndex]);
-
-    useEffect(() => {
-        if (selectedProduct) {
-            setPrice(prev => prev || String(selectedProduct.price || ''));
-        }
-    }, [selectedProduct]);
+    const [price, setPrice] = useState(aiItem?.unit_price ? String(aiItem.unit_price) : (initialProduct?.price ? String(initialProduct.price) : ''));
 
     const displayed = showAll
         ? products.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()))

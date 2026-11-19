@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -14,7 +14,7 @@ export function useCollections() {
     const useSupabase = isSupabaseConfigured();
 
     // Fetch from Supabase
-    const fetchCollections = async () => {
+    const fetchCollections = useCallback(async () => {
         if (!useSupabase) return;
 
         setLoading(true);
@@ -32,13 +32,13 @@ export function useCollections() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [useSupabase]);
 
     useEffect(() => {
         if (useSupabase) {
             fetchCollections();
         }
-    }, [useSupabase]);
+    }, [fetchCollections, useSupabase]);
 
     // Get collections (Supabase or localStorage)
     const collections = useSupabase ? supabaseCollections : localCollections;
