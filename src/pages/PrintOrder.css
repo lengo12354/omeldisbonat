@@ -22,9 +22,10 @@
     background: white;
     padding: 1.5rem 1rem;
     border: 2px solid #000;
-    font-family: 'Times New Roman', Times, serif;
+    font-family: Tahoma, Arial, sans-serif;
     color: #000;
-    font-size: 11pt;
+    font-size: 11.5pt;
+    line-height: 1.35;
     border-radius: 0 !important;
 }
 
@@ -35,7 +36,7 @@
     padding-bottom: 0.75rem;
     margin-bottom: 0.75rem;
     font-weight: bold;
-    font-size: 10pt;
+    font-size: 11pt;
 }
 
 /* Order Number */
@@ -45,7 +46,7 @@
     padding-bottom: 0.75rem;
     margin-bottom: 0.75rem;
     font-weight: bold;
-    font-size: 11pt;
+    font-size: 11.5pt;
 }
 
 /* Client Info */
@@ -55,16 +56,16 @@
     padding-bottom: 0.75rem;
     margin-bottom: 0.75rem;
     font-weight: bold;
-    font-size: 10pt;
+    font-size: 11pt;
 }
 
 /* Items Table */
 /* Items Table - Clean Re-implementation */
-.items-table {
+.receipt .items-table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 0.75rem;
-    font-size: 10pt;
+    font-size: 10.5pt;
     border: 2px solid #000 !important;
     /* Outer Thick Frame */
     background: white !important;
@@ -72,11 +73,11 @@
     border-radius: 0 !important;
 }
 
-.items-table th {
+.receipt .items-table th {
     padding: 0.4rem 0.3rem;
     text-align: left;
     font-weight: bold;
-    font-size: 9pt;
+    font-size: 10pt;
     border: 1px solid #000 !important;
     /* Inner Borders */
     color: #000 !important;
@@ -84,9 +85,9 @@
     border-radius: 0 !important;
 }
 
-.items-table td {
+.receipt .items-table td {
     padding: 0.4rem 0.3rem;
-    font-size: 10pt;
+    font-size: 10.5pt;
     font-weight: bold;
     border: 1px solid #000 !important;
     /* Inner Borders */
@@ -107,7 +108,7 @@
 .receipt-net {
     text-align: right;
     font-weight: bold;
-    font-size: 11pt;
+    font-size: 12pt;
     margin: 0.75rem 0;
     padding: 0.5rem 0;
     border-top: 1px dashed #000;
@@ -121,7 +122,7 @@
     padding: 0.5rem 0;
     margin: 0.5rem 0;
     font-weight: normal;
-    font-size: 10pt;
+    font-size: 10.5pt;
 }
 
 /* Date Time */
@@ -131,7 +132,7 @@
     border-bottom: 1px dashed #000;
     margin-bottom: 0.5rem;
     font-weight: bold;
-    font-size: 10pt;
+    font-size: 10.5pt;
 }
 
 /* Footer */
@@ -199,6 +200,14 @@
         padding: 1rem !important;
         background: white !important;
         box-shadow: none !important;
+        color: #000 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .receipt * {
+        color: #000 !important;
+        text-shadow: none !important;
     }
 
     /* Keep borders for print */
@@ -212,12 +221,12 @@
     }
 
     /* Force Borders on Print */
-    .items-table {
+    .receipt .items-table {
         border: 2px solid #000 !important;
     }
 
-    .items-table th,
-    .items-table td {
+    .receipt .items-table th,
+    .receipt .items-table td {
         border: 1px solid #000 !important;
         color: #000 !important;
         background: white !important;
