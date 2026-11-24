@@ -54,6 +54,23 @@
 :root[data-theme='light'] .settings-alert { background: #fff0f1; color: #a62738; }
 :root[data-theme='light'] .settings-signout { color: #bd3445; border-color: #e4a6ad; }
 :root[data-theme='light'] .settings-signout:hover { background: #fff0f1; color: #a62738; }
+:root[data-theme='light'] .settings-account { background: #fff; border-color: #d1dce7; box-shadow: 0 12px 32px #1734520c; }
+:root[data-theme='light'] .settings-account-avatar,
+:root[data-theme='light'] .settings-section-icon { background: #e7f2ff; border-color: #bfd8f3; color: #2878c8; }
+:root[data-theme='light'] .settings-account-label,
+:root[data-theme='light'] .settings-account-username,
+:root[data-theme='light'] .settings-card-heading p,
+:root[data-theme='light'] .settings-help { color: #52677d; }
+:root[data-theme='light'] .settings-account strong,
+:root[data-theme='light'] .settings-card h2,
+:root[data-theme='light'] .settings-form label { color: #172a3d; }
+:root[data-theme='light'] .settings-signout { background: #fff; }
+:root[data-theme='light'] .settings-provider-options button { background: #f7f9fc; border-color: #cbd7e3; color: #2f4760; }
+:root[data-theme='light'] .settings-provider-options button.selected { background: #e8f3ff; border-color: #2878c8; color: #185e9e; }
+:root[data-theme='light'] .settings-key-field .input { background: #fff; border-color: #bdcbd9; color: #172a3d; }
+:root[data-theme='light'] .settings-key-field button { color: #52677d; }
+:root[data-theme='light'] .settings-key-status { background: #f1f5f9; border-color: #cbd7e3; color: #52677d; }
+:root[data-theme='light'] .settings-key-status--saved { background: #e6f5ec; border-color: #8ec7a1; color: #17663d; }
 
 /* Shared work surfaces */
 :root[data-theme='light'] .layout .clients-table-container,

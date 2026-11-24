@@ -23,8 +23,10 @@
 .layout .header-actions { gap: 9px; align-items: center; }
 .layout .clients-table-container, .layout .orders-table-container { background: #1d1d1f; border: 1px solid #3d4b5b; border-radius: 10px; box-shadow: none; overflow-x: auto; }
 .layout .clients-table thead, .layout .orders-table thead { background: #151516; border-bottom: 1px solid #3b3b3d; }
-.layout .clients-table th, .layout .orders-table th { font-size: 9px; font-weight: 500; letter-spacing: .6px; padding: 15px 20px; color: #9eb4ca; }
-.layout .clients-table td, .layout .orders-table td { padding: 16px 20px; font-size: 11px; }
+.layout .clients-table th, .layout .orders-table th { font-size: 12px; font-weight: 650; letter-spacing: .4px; padding: 15px 20px; color: #b7c8da; }
+.layout .clients-table td, .layout .orders-table td { padding: 17px 20px; font-size: 14px; line-height: 1.5; }
+.layout .orders-table .client-info strong { font-size: 14px; line-height: 1.45; font-weight: 650; }
+.layout .orders-table .client-info span, .layout .orders-table .time-text { font-size: 12px; }
 .layout .clients-table tbody tr:hover, .layout .orders-table tbody tr:hover { transform: none; background: #2d2d2f; }
 .layout .client-avatar { width: 33px; height: 33px; border-radius: 50%; background: #2a3e56; color: #b5d7ff; }
 .layout .client-avatar svg { width: 16px; }
