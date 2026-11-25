@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Trash2, Package, Tag, DollarSign, Grid, Pencil, Edit2, AlertTriangle, Warehouse, TrendingDown } from 'lucide-react';
 import Modal from '../components/Modal';
 import AppSelect from '../components/AppSelect';
@@ -11,12 +12,13 @@ import { fmt, fmtFull } from '../utils/format';
 import './Products.css';
 
 export default function Products() {
+    const [searchParams] = useSearchParams();
     const { products, loading, addProduct, deleteProduct, updateProduct, importProducts } = useProducts();
     const { collections } = useCollections();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [search, setSearch] = useState('');
-    const [filterStock, setFilterStock] = useState('all'); // all | low | out
+    const [search, setSearch] = useState(() => searchParams.get('search') || '');
+    const [filterStock, setFilterStock] = useState(() => searchParams.get('view') === 'missing-cost' ? 'missing-cost' : 'all');
     const [visibleCount, setVisibleCount] = useState(50);
 
     // Form State
@@ -169,6 +171,7 @@ export default function Products() {
             const qty = p.stock_quantity || 0;
             const level = p.reorder_level || 5;
 
+            if (filterStock === 'missing-cost') return Number(p.purchase_price) <= 0;
             if (filterStock === 'out') return qty === 0;
             if (filterStock === 'low') return qty > 0 && qty <= level;
             return true;
@@ -242,7 +245,7 @@ export default function Products() {
                 </div>
                 {filterStock !== 'all' && (
                     <button className="btn btn-outline btn-sm" onClick={() => changeFilter('all')}>
-                        Tout afficher
+                        {filterStock === 'missing-cost' ? 'Sans prix d’achat · Tout afficher' : 'Tout afficher'}
                     </button>
                 )}
             </div>

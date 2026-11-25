@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useOrders } from '../hooks/useOrders';
 import { useProducts } from '../hooks/useProducts';
 import { useClients } from '../hooks/useClients';
@@ -8,6 +9,7 @@ import { fmt, fmtFull } from '../utils/format';
 import './Orders.css';
 
 export default function Orders() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const { orders, deleteOrder: removeOrder, updateOrder, loading, error, refresh } = useOrders();
     const { products, updateStock } = useProducts();
     const { clients } = useClients();
@@ -29,9 +31,11 @@ export default function Orders() {
     const [productSearch, setProductSearch] = useState('');
     const [showProductPicker, setShowProductPicker] = useState(false);
 
+    const lossOnly = searchParams.get('view') === 'loss';
+    const lossCount = orders.filter(order => Number(order.profitAmount) < 0 || (order.items || []).some(item => Number(item.profit) < 0)).length;
     const filteredOrders = orders.filter(o =>
-        o.client.name.toLowerCase().includes(search.toLowerCase()) ||
-        o.id.includes(search)
+        (!lossOnly || Number(o.profitAmount) < 0 || (o.items || []).some(item => Number(item.profit) < 0)) &&
+        ((o.client?.name || '').toLowerCase().includes(search.toLowerCase()) || o.id.includes(search))
     );
 
     const deleteOrder = (id) => {
@@ -221,6 +225,7 @@ export default function Orders() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+                    {lossCount > 0 && <button type="button" className={`btn ${lossOnly ? 'btn-danger' : 'btn-outline'}`} onClick={() => setSearchParams(lossOnly ? {} : { view: 'loss' })}><AlertTriangle size={16} />{lossOnly ? 'Tous les bons' : `À perte (${lossCount})`}</button>}
                     {orders.length > 0 && (
                         <button className="btn btn-danger" onClick={handleDeleteAll} title="Supprimer tout l'historique">
                             <Trash2 size={18} /> Tout Supprimer
@@ -258,7 +263,7 @@ export default function Orders() {
                         <FileText size={64} />
                     </div>
                     <h3>No orders found</h3>
-                    <p>{search ? `No results for "${search}"` : 'No orders created yet'}</p>
+                    <p>{search ? `No results for "${search}"` : lossOnly ? 'Aucun bon à perte.' : 'No orders created yet'}</p>
                 </div>
             ) : (
                 <div className="orders-table-container">
@@ -295,6 +300,7 @@ export default function Orders() {
                                         <span className="items-count">
                                             {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
                                         </span>
+                                        {(order.items || []).find(item => Number(item.profit) < 0) && <span className="order-loss-product">À perte : {(order.items || []).find(item => Number(item.profit) < 0).name}</span>}
                                     </td>
                                     <td>
                                         <span className="badge badge-success">

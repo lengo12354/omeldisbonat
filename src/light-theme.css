@@ -576,3 +576,17 @@
 :root[data-theme='light'] .client-history-heading { color: #245e98; }
 :root[data-theme='light'] .client-order-line .client-item-profit-neutral,
 :root[data-theme='light'] .client-order-line .client-item-profit-unknown { color: #52677b; }
+:root[data-theme='light'] .overview-check { background: #f7f0e5; border-color: #c8a574; color: #80531a; }
+:root[data-theme='light'] .overview-check small { color: #6e5a3f; }
+:root[data-theme='light'] .overview-check:hover { background: #f2e7d6; border-color: #a9793e; }
+:root[data-theme='light'] .overview-check--loss { background: #f8e7ea; border-color: #d39aa4; color: #a72d3e; }
+:root[data-theme='light'] .overview-check--loss small { color: #8d4550; }
+:root[data-theme='light'] .overview-check--loss:hover { background: #f3dce0; border-color: #b93245; }
+:root[data-theme='light'] .stock-urgent { border-color: #d3dde7; }
+:root[data-theme='light'] .stock-urgent-row { border-color: #d3dde7; color: #263d52; }
+:root[data-theme='light'] .stock-urgent-row:hover { color: #1d5b96; }
+:root[data-theme='light'] .stock-urgent-row small,
+:root[data-theme='light'] .stock-urgent-note { color: #52677b; }
+:root[data-theme='light'] .stock-urgent-row strong { color: #875b1e; }
+:root[data-theme='light'] .stock-urgent-row .stock-urgent-out,
+:root[data-theme='light'] .order-loss-product { color: #b93245; }

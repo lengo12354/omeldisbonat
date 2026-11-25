@@ -894,3 +894,4 @@
 .orders-load-error span { flex: 1; }
 .orders-load-error button { border: 1px solid #df7881; border-radius: 6px; padding: 7px 11px; background: #632f37; color: #fff; font: inherit; cursor: pointer; }
 .orders-load-error button:hover { background: #813a44; }
+.order-loss-product { display: block; max-width: 190px; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ff7883; font-size: 11px; font-weight: 600; }
