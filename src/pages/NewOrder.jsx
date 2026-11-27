@@ -5,6 +5,8 @@ import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
 import { Search, User, Package, ShoppingCart, ArrowRight, ArrowLeft, Check, Plus, Minus, Trash2, TrendingUp, AlertTriangle, XCircle, DollarSign } from 'lucide-react';
 import Modal from '../components/Modal';
+import LossWarningModal from '../components/LossWarningModal';
+import { belowCostItems, repriceItems } from '../utils/orderPricing';
 import { fmt, fmtFull } from '../utils/format';
 import './NewOrder.css';
 
@@ -18,6 +20,7 @@ export default function NewOrder() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
     const [cart, setCart] = useState([]);
+    const [lossWarning, setLossWarning] = useState([]);
 
     // Search states
     const [clientSearch, setClientSearch] = useState('');
@@ -27,6 +30,7 @@ export default function NewOrder() {
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
     const [itemForm, setItemForm] = useState({ price: '', quantity: 1 });
+    const [itemFormError, setItemFormError] = useState('');
 
     // Filtering
     const filteredClients = clients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()));
@@ -42,6 +46,7 @@ export default function NewOrder() {
     const openAddProductModal = (product) => {
         setCurrentProduct(product);
         setItemForm({ price: product.price || '', quantity: 1 });
+        setItemFormError('');
         setIsProductModalOpen(true);
     };
 
@@ -49,15 +54,20 @@ export default function NewOrder() {
         e.preventDefault();
         if (!currentProduct) return;
 
-        const sellPrice = parseFloat(itemForm.price) || 0;
+        const sellPrice = parseFloat(itemForm.price);
         const purchasePrice = parseFloat(currentProduct.purchase_price) || 0;
-        const quantity = parseFloat(itemForm.quantity) || 1;
+        const quantity = parseFloat(itemForm.quantity);
 
-        // منع البيع بأقل من ثمن الشراء
-        if (purchasePrice > 0 && sellPrice < purchasePrice) {
-            alert(`Prix de vente invalide!\nLe prix de vente (${sellPrice} MAD) ne peut pas être inférieur au prix d'achat (${purchasePrice} MAD).`);
+        if (!Number.isFinite(sellPrice) || sellPrice < 0) {
+            setItemFormError('Saisissez un prix de vente valide.');
             return;
         }
+        if (!Number.isFinite(quantity) || quantity <= 0 || (currentProduct.stock_quantity != null && quantity > Number(currentProduct.stock_quantity))) {
+            setItemFormError('Saisissez une quantité valide, dans la limite du stock disponible.');
+            return;
+        }
+        setItemFormError('');
+
         const totalSell = sellPrice * quantity;
         const totalCost = purchasePrice * quantity;
         const profit = totalSell - totalCost;
@@ -72,6 +82,13 @@ export default function NewOrder() {
             cost: totalCost,
             profit: profit
         };
+
+        const losses = belowCostItems([newItem]);
+        if (losses.length > 0) {
+            setIsProductModalOpen(false);
+            setLossWarning(losses);
+            return;
+        }
 
         setCart(prev => [...prev, newItem]);
         setIsProductModalOpen(false);
@@ -91,13 +108,15 @@ export default function NewOrder() {
     const handleConfirmOrder = async () => {
         if (!selectedClient || cart.length === 0 || isSubmitting) return;
 
+        const orderItems = repriceItems(cart, products);
+
         setIsSubmitting(true);
         const newOrder = {
             client: selectedClient,
-            items: cart,
+            items: orderItems,
             totalAmount: cartTotal,
-            costAmount: cartCost,
-            profitAmount: cartProfit,
+            costAmount: orderItems.reduce((sum, item) => sum + item.cost, 0),
+            profitAmount: orderItems.reduce((sum, item) => sum + item.profit, 0),
             date: new Date().toISOString(),
             status: 'Completed'
         };
@@ -106,7 +125,7 @@ export default function NewOrder() {
             await addOrder(newOrder);
 
             // نقص stock لكل منتج في الكارت (مرة وحدة فقط)
-            for (const item of cart) {
+            for (const item of orderItems) {
                 if (item.productId) {
                     await updateStock(item.productId, -item.quantity);
                 }
@@ -337,7 +356,7 @@ export default function NewOrder() {
                 onClose={() => setIsProductModalOpen(false)}
                 title={currentProduct?.name || 'Ajouter'}
             >
-                <form onSubmit={addToCart} className="add-item-form">
+                <form onSubmit={addToCart} className="add-item-form" noValidate>
                     {currentProduct?.purchase_price > 0 && (
                         <div className="modal-cost-info">
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><DollarSign size={14} /> Prix d'achat (Ras el Mal):</span>
@@ -356,8 +375,7 @@ export default function NewOrder() {
                         <label>Prix de Vente (MAD/unité)</label>
                         <input
                             type="number"
-                            step="0.01"
-                            min={currentProduct?.purchase_price || 0}
+                            step="any"
                             className="input"
                             value={itemForm.price}
                             onChange={e => setItemForm({ ...itemForm, price: e.target.value })}
@@ -366,7 +384,7 @@ export default function NewOrder() {
                         />
                         {currentProduct?.purchase_price > 0 && (
                             <span className="form-hint" style={{ color: 'var(--warning)' }}>
-                                <AlertTriangle size={14} aria-hidden="true" /> Prix minimum: {parseFloat(currentProduct.purchase_price).toFixed(2)} MAD (ras el mal)
+                                <AlertTriangle size={14} aria-hidden="true" /> Prix d'achat : {parseFloat(currentProduct.purchase_price).toFixed(2)} MAD. Un prix inférieur empêchera l’ajout du produit.
                             </span>
                         )}
                     </div>
@@ -430,6 +448,7 @@ export default function NewOrder() {
                             {(parseFloat(itemForm.price || 0) * parseFloat(itemForm.quantity || 1)).toFixed(2)} MAD
                         </span>
                     </div>
+                    {itemFormError && <p className="add-item-error" role="alert">{itemFormError}</p>}
                     <div className="form-actions">
                         <button type="button" className="btn btn-outline" onClick={() => setIsProductModalOpen(false)}>
                             Annuler
@@ -440,6 +459,7 @@ export default function NewOrder() {
                     </div>
                 </form>
             </Modal>
+            <LossWarningModal items={lossWarning} onClose={() => { setLossWarning([]); setIsProductModalOpen(true); }} />
         </div>
     );
 }

@@ -5,6 +5,8 @@ import { useProducts } from '../hooks/useProducts';
 import { useClients } from '../hooks/useClients';
 import { Eye, Printer, Trash2, Search, FileText, ShoppingCart, Calendar, DollarSign, Edit2, Plus, Minus, Package, Check, X, AlertTriangle, User } from 'lucide-react';
 import Modal from '../components/Modal';
+import LossWarningModal from '../components/LossWarningModal';
+import { repriceItems } from '../utils/orderPricing';
 import { fmt, fmtFull } from '../utils/format';
 import './Orders.css';
 
@@ -22,6 +24,8 @@ export default function Orders() {
     const [editItems, setEditItems] = useState([]);            // mutable copy of items
     const [editClient, setEditClient] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [lossWarning, setLossWarning] = useState([]);
+    const [pendingProduct, setPendingProduct] = useState(null);
     
     // Client picker state
     const [showClientPicker, setShowClientPicker] = useState(false);
@@ -84,6 +88,8 @@ export default function Orders() {
         setIsSaving(false);
         setShowProductPicker(false);
         setShowClientPicker(false);
+        setLossWarning([]);
+        setPendingProduct(null);
     };
 
     // ─── Edit Item Handlers ───────────────────────────────────────
@@ -112,14 +118,19 @@ export default function Orders() {
     };
 
     // ─── Add product from picker ──────────────────────────────────
-    const addProductToEdit = (product) => {
+    const addProductToEdit = (product, usePurchasePrice = false) => {
+        const purchasePrice = parseFloat(product.purchase_price) || 0;
         // If already in list, just bump quantity
         const existing = editItems.findIndex(i => i.productId === product.id);
+        const price = existing !== -1 ? Number(editItems[existing].price) || 0 : usePurchasePrice ? purchasePrice : parseFloat(product.price) || 0;
+        if (purchasePrice > 0 && price < purchasePrice) {
+            setLossWarning([{ name: product.name, salePrice: price, purchasePrice }]);
+            setPendingProduct(existing === -1 ? product : null);
+            return;
+        }
         if (existing !== -1) {
             handleQtyChange(existing, editItems[existing].quantity + 1);
         } else {
-            const price = parseFloat(product.price) || 0;
-            const purchasePrice = parseFloat(product.purchase_price) || 0;
             setEditItems(prev => [...prev, {
                 productId: product.id,
                 name: product.name,
@@ -133,11 +144,13 @@ export default function Orders() {
         }
         setShowProductPicker(false);
         setProductSearch('');
+        setPendingProduct(null);
     };
 
     // ─── Save Edit ────────────────────────────────────────────────
     const handleSaveEdit = async () => {
         if (!editingOrder || editItems.length === 0) return;
+        const checkedItems = repriceItems(editItems);
         setIsSaving(true);
 
         try {
@@ -174,13 +187,13 @@ export default function Orders() {
 
             // Recalculate totals
             const totalAmount  = editItems.reduce((s, i) => s + i.total, 0);
-            const costAmount   = editItems.reduce((s, i) => s + (i.cost || 0), 0);
-            const profitAmount = editItems.reduce((s, i) => s + (i.profit || 0), 0);
+            const costAmount   = checkedItems.reduce((s, i) => s + (i.cost || 0), 0);
+            const profitAmount = checkedItems.reduce((s, i) => s + (i.profit || 0), 0);
 
             const updatedOrder = {
                 ...editingOrder,
                 client: editClient,
-                items: editItems,
+                items: checkedItems,
                 totalAmount,
                 costAmount,
                 profitAmount,
@@ -677,6 +690,10 @@ export default function Orders() {
                     </div>
                 )}
             </Modal>
+            <LossWarningModal items={lossWarning} onClose={() => { setLossWarning([]); setPendingProduct(null); }} onUseCost={pendingProduct ? () => {
+                addProductToEdit(pendingProduct, true);
+                setLossWarning([]);
+            } : undefined} />
         </div>
     );
 }

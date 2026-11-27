@@ -5,6 +5,8 @@ import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
 import { callGemini } from '../lib/gemini';
 import { fmt } from '../utils/format';
+import LossWarningModal from '../components/LossWarningModal';
+import { repriceItems } from '../utils/orderPricing';
 import {
     Sparkles, Upload, ImagePlus, User, Package,
     Check, X, ChevronRight, ShoppingCart,
@@ -100,6 +102,7 @@ export default function AIOrder() {
     const [clientCandidates, setClientCandidates] = useState([]);
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
     const [confirmedItems, setConfirmedItems] = useState([]);
+    const [lossWarning, setLossWarning] = useState([]);
 
     // Drag over
     const [isDragging, setIsDragging] = useState(false);
@@ -199,8 +202,13 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
     /* ── Item confirmed ── */
     function handleItemConfirm(product, quantity, price) {
         const purchasePrice = parseFloat(product.purchase_price) || 0;
-        const sellPrice = parseFloat(price) || parseFloat(product.price) || 0;
+        const sellPrice = parseFloat(price) || 0;
         const qty = parseFloat(quantity) || 1;
+
+        if (purchasePrice > 0 && sellPrice < purchasePrice) {
+            setLossWarning([{ name: product.name, salePrice: sellPrice, purchasePrice }]);
+            return;
+        }
 
         const item = {
             productId: product.id,
@@ -238,17 +246,18 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
     /* ── Confirm & Save ── */
     async function handleAccept() {
         if (!confirmedClient || confirmedItems.length === 0) return;
+        const orderItems = repriceItems(confirmedItems, products);
         setStep(STEP.SAVING);
 
         try {
-            const totalAmount = confirmedItems.reduce((s, i) => s + i.total, 0);
-            const costAmount = confirmedItems.reduce((s, i) => s + i.cost, 0);
-            const profitAmount = confirmedItems.reduce((s, i) => s + i.profit, 0);
+            const totalAmount = orderItems.reduce((s, i) => s + i.total, 0);
+            const costAmount = orderItems.reduce((s, i) => s + i.cost, 0);
+            const profitAmount = orderItems.reduce((s, i) => s + i.profit, 0);
 
             const newOrder = {
                 id: Date.now().toString(),
                 client: confirmedClient,
-                items: confirmedItems,
+                items: orderItems,
                 totalAmount,
                 costAmount,
                 profitAmount,
@@ -259,7 +268,7 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
             await addOrder(newOrder);
 
             // Update stock
-            for (const item of confirmedItems) {
+            for (const item of orderItems) {
                 if (item.productId) {
                     await updateStock(item.productId, -item.quantity);
                 }
@@ -475,6 +484,7 @@ Si tu ne vois pas de bon de commande ou de liste de produits dans l'image, retou
                     </button>
                 </div>
             )}
+            <LossWarningModal items={lossWarning} onClose={() => setLossWarning([])} />
         </div>
     );
 }

@@ -620,6 +620,8 @@
     gap: 1.25rem;
 }
 
+.add-item-error { margin: 0; padding: 10px 12px; border-radius: 7px; border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); font-size: 12px; font-weight: 650; }
+
 .form-group {
     display: flex;
     flex-direction: column;
